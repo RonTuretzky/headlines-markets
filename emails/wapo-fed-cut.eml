@@ -1,0 +1,37 @@
+Delivered-To: subscriber@example.com
+Received: from a94-113.smtp-out.amazonses.com (a94-113.smtp-out.amazonses.com [54.240.94.113])
+        by mx.example.com with ESMTPS id f6g7h8i9j0
+        for <subscriber@example.com>; Wed, 12 Aug 2026 14:11:38 -0400 (EDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=email.washingtonpost.com; s=oknawpib3wh3pqlgfhyhpkbmvvqermtw;
+        h=From:To:Subject:Date:MIME-Version:Content-Type; t=1786558298;
+        bh=bW9ja2JvZHloYXNod2Fwb2ZlZGN1dDIwMjZhdWcxMg==;
+        b=TW9jayBES0lNIHNpZ25hdHVyZSBmb3IgdGhlIFdhc2hpbmd0b24gUG9zdCBicmVha2luZy1u
+        ZXdzIGFsZXJ0LiBTdHJ1Y3R1cmFsbHkgZmFpdGhmdWwsIG5vdCBjcnlwdG9ncmFwaGljYWxs
+        eSB2YWxpZC4=
+From: The Washington Post <breaking-news@email.washingtonpost.com>
+To: subscriber@example.com
+Subject: Fed slashes rates in emergency action as credit conditions tighten
+Date: Wed, 12 Aug 2026 14:11:35 -0400
+Message-ID: <0102018f2ab4c1d9-4f2e77aa-bb1c-4a3e-9a01-7c2f10a9e8d2-000000@email.washingtonpost.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+List-Unsubscribe: <https://www.washingtonpost.com/newsletters/manage>
+
+Breaking News Alert
+
+Fed slashes rates in emergency action as credit conditions tighten
+
+The Federal Reserve cut its benchmark rate by 50 basis points Wednesday,
+its first emergency move since 2020, citing rapidly deteriorating credit
+conditions and a weakening labor market.
+
+Read more:
+https://www.washingtonpost.com/business/2026/08/12/fed-emergency-rate-cut/
+
+You are receiving this email because you signed up for Breaking News Alerts
+from The Washington Post.
+
+Unsubscribe or manage newsletters:
+https://www.washingtonpost.com/newsletters/manage
+
+The Washington Post, 1301 K St NW, Washington, DC 20071

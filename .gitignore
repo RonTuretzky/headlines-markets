@@ -1,0 +1,16 @@
+# foundry
+contracts/out/
+contracts/cache/
+contracts/broadcast/
+
+# node
+node_modules/
+app/dist/
+
+# generated (recreated by `pnpm sync` from forge artifacts + deployments)
+app/src/contracts/gen.ts
+
+# playwright
+app/test-results/
+app/playwright-report/
+app/e2e/.anvil-pid

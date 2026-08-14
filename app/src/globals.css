@@ -1,0 +1,15 @@
+@import "tailwindcss";
+@import "@breadcoop/ui/theme";
+
+/* Neo-brutalist card in the bread-ui-kit design language: square corners,
+   ink border, hard offset shadow. */
+@utility bread-card {
+  background-color: var(--color-paper-0, #fdfcf9);
+  border: 2px solid #1b201a;
+  box-shadow: 0.25rem 0.25rem 0px 0px #595959;
+}
+
+body {
+  background-color: #f6f3eb; /* paper-main */
+  color: #1b201a; /* surface-ink */
+}

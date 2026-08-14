@@ -1,0 +1,31 @@
+Delivered-To: subscriber@example.com
+Received: from mta-114-19.sparkpostmail.com (mta-114-19.sparkpostmail.com [192.174.94.19])
+        by mx.example.com with ESMTPS id p5q6r7s8t9
+        for <subscriber@example.com>; Wed, 12 Aug 2026 06:02:20 -0400 (EDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=nytimes.com; s=scph0818;
+        h=from:to:subject:date:mime-version:content-type; t=1786528937;
+        bh=bW9ja2JvZHloYXNobnl0bW9ybmluZzIwMjZhdWcxMg==;
+        b=TW9jayBES0lNIHNpZ25hdHVyZSBmb3IgYSBOWVQgbW9ybmluZyBicmllZmluZyBlbWFpbC4g
+        VXNlZnVsIGFzIGEgTkVHQVRJVkUgdGVzdDogdmFsaWQgc2VuZGVyLCB2YWxpZCBES0lNLCBi
+        dXQgdGhlIGNvbnRlbnQgZG9lcyBOT1QgbWF0Y2ggdGhlIG1hcmtldCByZWdleC4=
+From: The New York Times <nytdirect@nytimes.com>
+To: subscriber@example.com
+Subject: The Morning: Your Wednesday Briefing
+Date: Wed, 12 Aug 2026 06:02:17 -0400
+Message-ID: <20260812100217.1847292.11507@content9a.nytimes.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+List-Unsubscribe: <https://www.nytimes.com/account/email-preferences>
+
+Good morning. Here's what you need to know:
+
+- Markets await the Federal Reserve's afternoon statement.
+- Heat wave grips the Northeast for a third day.
+- The transfer window enters its final week.
+
+This sample intentionally does NOT match the Fed-rate-cut market pattern:
+the Fed has not acted in this email, so a proof built from it must be
+rejected by the market's content regex.
+
+The New York Times Company
+620 Eighth Avenue New York, NY 10018

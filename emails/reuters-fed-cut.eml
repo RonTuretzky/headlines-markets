@@ -1,0 +1,35 @@
+Delivered-To: subscriber@example.com
+Received: from o1.sailthru-out.reuters.com (o1.sailthru-out.reuters.com [107.21.14.88])
+        by mx.example.com with ESMTPS id k1l2m3n4o5
+        for <subscriber@example.com>; Wed, 12 Aug 2026 14:07:52 -0400 (EDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=email.reuters.com; s=sailthru;
+        h=from:to:subject:date:mime-version:content-type; t=1786558069;
+        bh=bW9ja2JvZHloYXNocmV1dGVyc2ZlZGN1dDIwMjY=;
+        b=TW9jayBES0lNIHNpZ25hdHVyZSBmb3IgdGhlIFJldXRlcnMgYnJlYWtpbmctbmV3cyBhbGVy
+        dC4gU3RydWN0dXJhbGx5IGZhaXRoZnVsIHRvIHJlYWwgU2FpbHRocnUgaGVhZGVycywgbm90
+        IGNyeXB0b2dyYXBoaWNhbGx5IHZhbGlkLg==
+From: Reuters News <newsletters@email.reuters.com>
+To: subscriber@example.com
+Subject: BREAKING: Fed cuts interest rates by 50 bps in emergency move
+Date: Wed, 12 Aug 2026 14:07:49 -0400
+Message-ID: <20260812.180749.7731845.reuters@email.reuters.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+List-Unsubscribe: <https://www.reuters.com/newsletters/manage>
+
+REUTERS BREAKING NEWS
+
+Fed cuts interest rates by 50 bps in emergency move
+
+WASHINGTON, Aug 12 (Reuters) - The U.S. Federal Reserve cut interest rates
+by half a percentage point on Wednesday in its first unscheduled policy
+action since the pandemic, moving to shore up confidence as credit spreads
+widened sharply.
+
+Full coverage:
+https://www.reuters.com/markets/us/fed-emergency-rate-cut-2026-08-12/
+
+You signed up for Reuters breaking news alerts.
+Manage newsletters: https://www.reuters.com/newsletters/manage
+
+Thomson Reuters, 3 Times Square, New York, NY 10036
