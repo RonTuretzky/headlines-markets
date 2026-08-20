@@ -36,8 +36,9 @@ test("markets list shows the seeded markets with Polymarket-style pricing", asyn
   await expect(page.getByTestId("market-card-1")).toContainText("Bitcoin above $150k");
   await expect(page.getByTestId("market-card-1")).toContainText("25¢"); // hinted odds
   await expect(page.getByTestId("market-card-2")).toContainText("Alien contact");
-  // sources shown as chips on the card
-  await expect(page.getByTestId("market-card-0")).toContainText("The New York Times");
+  // sources count + hero chance shown on the card
+  await expect(page.getByTestId("market-card-0")).toContainText("3 sources");
+  await expect(page.getByTestId("market-card-0")).toContainText("50%");
 
   // filter + search work
   await page.getByTestId("filter-live").click();
@@ -144,6 +145,7 @@ test("anyone can create a market permissionlessly", async ({ page }) => {
   await expect(page).toHaveURL(/#\/market\/3/, { timeout: 30_000 });
   await expect(page.getByTestId("market-question")).toContainText("rain of frogs");
   await expect(page.getByTestId("headline-price")).toContainText("50¢");
+  await page.getByTestId("market-tab-rules").click();
   await expect(page.getByTestId("rules-panel")).toContainText("2 of 3 newspapers");
 });
 

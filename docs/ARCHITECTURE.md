@@ -82,6 +82,22 @@ DKIM domain → email date within `[windowStart, deadline]` → From matches `fr
 → content matches the effective regex (per-source override, else market default;
 against subject, body, or either). Accepting the K-th distinct source reports `[1,0]`.
 
+**Real zk-regex circuits (A3).** `app/scripts/zkregex/` compiles a market pattern
+pair for real: parse (same grammar as RegexLib) → Thompson NFA → subset-construction
+DFA over byte-interval classes (differentially tested against JS `RegExp` on 12k
+cases) → a circom circuit (one-hot DFA simulation; search semantics via start-state
+self-merge; accepting states absorbing; NUL padding can never create a match) →
+Groth16 setup → snarkjs Solidity verifier. `ZkRegexVerifierRegistry` maps
+`keccak(fromPatternHash ++ contentPatternHash)` to the deployed verifier,
+**write-once** so nobody can swap in an always-true verifier later; registering a
+circuit permanently disables the mock fallback for that pair in `ZkEmailVerifierV2`.
+The proof's public input `binding = keccak(domain, pubkeyHash, timestamp, nullifier)
+mod r` ties the zk proof to the claimed email identity. Proving: ~2s in node for the
+Fed-pattern circuit (150,593 constraints), in-browser via snarkjs on submit. Dev
+trust caveat: the Groth16 setup is a local single contribution — production needs a
+per-circuit MPC ceremony — and until the DKIM-RSA check joins the circuit (A1) the
+content witness is honest-prover.
+
 **Compiled settlement path (backlog E1/A3).** `submitCompiledProof(sourceIndex,
 CompiledEmailProof)` is the gas-real, privacy-real twin of `submitProof`: the From and
 content patterns are compiled *into the proving circuit*, which only produces a proof
@@ -131,11 +147,12 @@ FPMM, optionally pulls `initialLiquidity` from the creator and funds the pool in
 same transaction (LP shares + any hint surplus go to the creator), and records the
 pair in an enumerable registry. No allowlists, no admin.
 
-Size discipline (E1): `new Child()` embeds the child's initcode in the creator's
-runtime, so the CREATEs live in two stateless deployer contracts, and RegexLib
-deploys once as an external linked library (its `matches`/`validate` are `public`).
-Result: every contract is under the EIP-170 24,576-byte limit (MarketFactory
-42.5KB → 3.2KB) and the whole system deploys on a vanilla EVM chain with no
+Size + deploy discipline (E1): markets and FPMMs are **EIP-1167 clones** of two
+implementations deployed once (constructor → `initialize`, per-market immutables →
+storage, implementations locked in their constructors); RegexLib deploys once as an
+external linked library (its `matches`/`validate` are `public`). Result: every
+contract is under the EIP-170 24,576-byte limit, `createMarket` costs 1.81M gas
+(~5M+ before), and the whole system deploys on a vanilla EVM chain with no
 size/gas overrides.
 
 ### Deviations from production Polymarket (by design)

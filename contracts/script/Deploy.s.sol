@@ -6,12 +6,13 @@ import {ConditionalTokens} from "../src/tokens/ConditionalTokens.sol";
 import {TestUSDC} from "../src/tokens/TestUSDC.sol";
 import {IERC20} from "../src/tokens/ERC20.sol";
 import {MockDKIMRegistry} from "../src/zkemail/MockDKIMRegistry.sol";
-import {MockZKEmailVerifier} from "../src/zkemail/MockZKEmailVerifier.sol";
+import {MockZKEmailVerifier} from "../src/zkemail/MockZKEmailVerifier.sol"; // kept for reference deployments
 import {HeadlineMarket} from "../src/market/HeadlineMarket.sol";
 import {MarketFactory} from "../src/market/MarketFactory.sol";
 import {FPMM} from "../src/market/FPMM.sol";
-import {MarketDeployer, FPMMDeployer} from "../src/market/Deployers.sol";
 import {Multicall3} from "../src/utils/Multicall3.sol";
+import {ZkRegexVerifierRegistry} from "../src/zkemail/ZkRegexVerifierRegistry.sol";
+import {ZkEmailVerifierV2} from "../src/zkemail/ZkEmailVerifierV2.sol";
 
 /// @notice Deploys the full stack to a local anvil chain, seeds demo markets and
 /// writes the addresses to deployments/local.json for the frontend.
@@ -31,9 +32,10 @@ contract Deploy is Script {
         ConditionalTokens ct = new ConditionalTokens();
         TestUSDC usdc = new TestUSDC();
         MockDKIMRegistry dkim = new MockDKIMRegistry();
-        MockZKEmailVerifier verifier = new MockZKEmailVerifier(dkim);
+        ZkRegexVerifierRegistry circuitRegistry = new ZkRegexVerifierRegistry();
+        ZkEmailVerifierV2 verifier = new ZkEmailVerifierV2(dkim, circuitRegistry);
         MarketFactory factory =
-            new MarketFactory(ct, verifier, new MarketDeployer(), new FPMMDeployer());
+            new MarketFactory(ct, verifier, address(new HeadlineMarket()), address(new FPMM()));
 
         // Register mock DKIM keys for the newspapers used by the demo markets.
         // (Also permissionless via registerMockKey for any new domain.)
@@ -136,6 +138,7 @@ contract Deploy is Script {
         vm.serializeAddress(json, "usdc", address(usdc));
         vm.serializeAddress(json, "dkimRegistry", address(dkim));
         vm.serializeAddress(json, "verifier", address(verifier));
+        vm.serializeAddress(json, "circuitRegistry", address(circuitRegistry));
         vm.serializeAddress(json, "multicall3", address(multicall));
         vm.serializeUint(json, "chainId", block.chainid);
         string memory out = vm.serializeAddress(json, "factory", address(factory));

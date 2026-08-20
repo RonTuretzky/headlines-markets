@@ -6,11 +6,11 @@ import {ConditionalTokens} from "../src/tokens/ConditionalTokens.sol";
 import {TestUSDC} from "../src/tokens/TestUSDC.sol";
 import {IERC20} from "../src/tokens/ERC20.sol";
 import {MockDKIMRegistry} from "../src/zkemail/MockDKIMRegistry.sol";
-import {MockZKEmailVerifier} from "../src/zkemail/MockZKEmailVerifier.sol";
+import {ZkRegexVerifierRegistry} from "../src/zkemail/ZkRegexVerifierRegistry.sol";
+import {ZkEmailVerifierV2} from "../src/zkemail/ZkEmailVerifierV2.sol";
 import {CompiledEmailProof, EmailProof} from "../src/zkemail/IZKEmail.sol";
 import {HeadlineMarket} from "../src/market/HeadlineMarket.sol";
 import {MarketFactory} from "../src/market/MarketFactory.sol";
-import {MarketDeployer, FPMMDeployer} from "../src/market/Deployers.sol";
 import {FPMM} from "../src/market/FPMM.sol";
 
 /// @notice Shared fixture: deploys the whole stack and provides a Solidity-side
@@ -19,7 +19,8 @@ contract MarketTestBase is Test {
     ConditionalTokens ct;
     TestUSDC usdc;
     MockDKIMRegistry dkim;
-    MockZKEmailVerifier verifier;
+    ZkRegexVerifierRegistry circuitRegistry;
+    ZkEmailVerifierV2 verifier;
     MarketFactory factory;
 
     address alice = makeAddr("alice");
@@ -31,8 +32,9 @@ contract MarketTestBase is Test {
         ct = new ConditionalTokens();
         usdc = new TestUSDC();
         dkim = new MockDKIMRegistry();
-        verifier = new MockZKEmailVerifier(dkim);
-        factory = new MarketFactory(ct, verifier, new MarketDeployer(), new FPMMDeployer());
+        circuitRegistry = new ZkRegexVerifierRegistry();
+        verifier = new ZkEmailVerifierV2(dkim, circuitRegistry);
+        factory = new MarketFactory(ct, verifier, address(new HeadlineMarket()), address(new FPMM()));
 
         dkim.registerMockKey("nytimes.com");
         dkim.registerMockKey("email.washingtonpost.com");

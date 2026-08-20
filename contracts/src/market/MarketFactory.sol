@@ -6,7 +6,7 @@ import {IERC20} from "../tokens/ERC20.sol";
 import {IZKEmailVerifier} from "../zkemail/IZKEmail.sol";
 import {HeadlineMarket} from "./HeadlineMarket.sol";
 import {FPMM} from "./FPMM.sol";
-import {MarketDeployer, FPMMDeployer} from "./Deployers.sol";
+import {Clones} from "../utils/Clones.sol";
 
 /// @title MarketFactory
 /// @notice Permissionless factory: anyone can open a headline market. Deploys the
@@ -50,43 +50,48 @@ contract MarketFactory {
 
     ConditionalTokens public immutable conditionalTokens;
     IZKEmailVerifier public immutable verifier;
-    MarketDeployer public immutable marketDeployer;
-    FPMMDeployer public immutable fpmmDeployer;
+    /// EIP-1167 implementations: every market/FPMM is a 45-byte clone of these.
+    address public immutable marketImplementation;
+    address public immutable fpmmImplementation;
 
     MarketRecord[] internal _markets;
 
     constructor(
         ConditionalTokens _conditionalTokens,
         IZKEmailVerifier _verifier,
-        MarketDeployer _marketDeployer,
-        FPMMDeployer _fpmmDeployer
+        address _marketImplementation,
+        address _fpmmImplementation
     ) {
         conditionalTokens = _conditionalTokens;
         verifier = _verifier;
-        marketDeployer = _marketDeployer;
-        fpmmDeployer = _fpmmDeployer;
+        marketImplementation = _marketImplementation;
+        fpmmImplementation = _fpmmImplementation;
     }
 
     function createMarket(CreateMarketParams calldata params)
         external
         returns (HeadlineMarket market, FPMM fpmm)
     {
-        market = marketDeployer.deploy(
+        market = HeadlineMarket(Clones.clone(marketImplementation));
+        market.initialize(
             conditionalTokens,
             verifier,
             params.collateralToken,
             msg.sender,
-            params.question,
-            params.description,
-            params.contentRegex,
-            params.contentField,
-            params.sources,
-            params.threshold,
-            params.windowStart,
-            params.deadline,
-            params.resolutionBuffer
+            HeadlineMarket.InitConfig({
+                question: params.question,
+                description: params.description,
+                contentRegex: params.contentRegex,
+                contentField: params.contentField,
+                sources: params.sources,
+                threshold: params.threshold,
+                windowStart: params.windowStart,
+                deadline: params.deadline,
+                resolutionBuffer: params.resolutionBuffer
+            })
         );
-        fpmm = fpmmDeployer.deploy(conditionalTokens, params.collateralToken, market.conditionId(), params.fee);
+        fpmm = FPMM(Clones.clone(fpmmImplementation));
+        fpmm.initialize(conditionalTokens, params.collateralToken, market.conditionId(), params.fee);
 
         if (params.initialLiquidity > 0) {
             require(

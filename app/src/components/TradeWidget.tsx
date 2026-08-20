@@ -5,6 +5,7 @@ import { abis } from "../contracts/gen";
 import { CT, Resolution, useBalances, type MarketData } from "../hooks/useMarkets";
 import { fmtAmount, fmtCents, parseAmount } from "../lib/format";
 import { publicClient, useWallet } from "../lib/wallet";
+import { useToast } from "./Toast";
 
 const SLIPPAGE_BPS = 100n; // 1% tolerance vs quoted amount
 
@@ -13,6 +14,7 @@ type Tab = "buy" | "sell";
 
 export function TradeWidget({ m }: { m: MarketData }) {
   const wallet = useWallet();
+  const toast = useToast();
   const { data: bal } = useBalances(wallet.address, m);
   const [tab, setTab] = useState<Tab>("buy");
   const [side, setSide] = useState<Side>(0);
@@ -104,6 +106,11 @@ export function TradeWidget({ m }: { m: MarketData }) {
           functionName: "buy",
           args: [units, BigInt(side), minShares],
         });
+        toast.push({
+          kind: "success",
+          title: `Bought ${fmtAmount(quote, dec, { dollar: false, dp: 0 })} ${side === 0 ? "Yes" : "No"}`,
+          detail: `for ${fmtAmount(units, dec)} · to win ${fmtAmount(quote, dec)}`,
+        });
       } else {
         const approved = (await publicClient.readContract({
           address: CT,
@@ -128,6 +135,11 @@ export function TradeWidget({ m }: { m: MarketData }) {
           abi: abis.FPMM,
           functionName: "sell",
           args: [minReturn, BigInt(side), units],
+        });
+        toast.push({
+          kind: "success",
+          title: `Sold ${fmtAmount(units, dec, { dollar: false, dp: 0 })} ${side === 0 ? "Yes" : "No"}`,
+          detail: `received ~${fmtAmount(minReturn, dec)}`,
         });
       }
       setAmount("");

@@ -72,10 +72,10 @@ contract HeadlineMarketTest is MarketTestBase {
     }
 
     function test_CannotBrickMarketByFrontRunningCondition() public {
-        // Attacker predicts the next market's address (the MarketDeployer's next CREATE)
-        // and pre-prepares its condition. Creation must still succeed (idempotent prepare).
-        address deployer = address(factory.marketDeployer());
-        address predictedMarket = vm.computeCreateAddress(deployer, vm.getNonce(deployer));
+        // Attacker predicts the next market's address (the factory's next CREATE — the
+        // EIP-1167 clone) and pre-prepares its condition. Creation must still succeed
+        // (idempotent prepare).
+        address predictedMarket = vm.computeCreateAddress(address(factory), vm.getNonce(address(factory)));
         bytes32 qid = keccak256(abi.encodePacked("HEADLINE_MARKET_V1", predictedMarket));
         ct.prepareCondition(predictedMarket, qid, 2); // front-run
 

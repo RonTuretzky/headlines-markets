@@ -16,7 +16,8 @@ export default defineConfig({
     trace: "retain-on-failure",
   },
   webServer: {
-    command: "VITE_RPC_URL=http://localhost:8548 npx vite --port 5198 --strictPort",
+    // sync-contracts runs AFTER global-setup's fresh deploy wrote deployments/local.json
+    command: "node scripts/sync-contracts.mjs && VITE_RPC_URL=http://localhost:8548 npx vite --port 5198 --strictPort",
     port: 5198,
     reuseExistingServer: false,
     timeout: 30_000,

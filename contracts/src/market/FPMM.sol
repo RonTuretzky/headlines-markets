@@ -33,12 +33,14 @@ contract FPMM is ERC20, IERC1155Receiver {
     );
     event FeesWithdrawn(address indexed funder, uint256 amount);
 
-    ConditionalTokens public immutable conditionalTokens;
-    IERC20 public immutable collateralToken;
-    bytes32 public immutable conditionId;
-    uint256 public immutable fee; // fraction of each trade, 1e18-scale (2e16 = 2%)
-    uint256 public immutable yesPositionId;
-    uint256 public immutable noPositionId;
+    // Storage (not immutable): FPMMs are EIP-1167 clones of one implementation.
+    ConditionalTokens public conditionalTokens;
+    IERC20 public collateralToken;
+    bytes32 public conditionId;
+    uint256 public fee; // fraction of each trade, 1e18-scale (2e16 = 2%)
+    uint256 public yesPositionId;
+    uint256 public noPositionId;
+    bool private initialized;
 
     // Fee accounting: accumulated collateral fees per LP share (1e18-scaled), with
     // signed corrections so mints/burns/transfers preserve accrued entitlements.
@@ -46,11 +48,22 @@ contract FPMM is ERC20, IERC1155Receiver {
     mapping(address => int256) private feeCorrection;
     mapping(address => uint256) public feesWithdrawn;
 
-    constructor(ConditionalTokens _conditionalTokens, IERC20 _collateralToken, bytes32 _conditionId, uint256 _fee)
-        ERC20("Headline Market LP", "HMLP", 18)
+    /// @dev Locks the shared implementation; `decimals` (immutable, 18) is baked into
+    /// the implementation bytecode and therefore shared by every clone — correct,
+    /// since all LP shares use it.
+    constructor() ERC20("Headline Market LP", "HMLP", 18) {
+        initialized = true;
+    }
+
+    function initialize(ConditionalTokens _conditionalTokens, IERC20 _collateralToken, bytes32 _conditionId, uint256 _fee)
+        external
     {
+        require(!initialized, "FPMM: already initialized");
+        initialized = true;
         require(_fee < ONE, "FPMM: fee must be < 100%");
         require(_conditionalTokens.getOutcomeSlotCount(_conditionId) == 2, "FPMM: binary conditions only");
+        name = "Headline Market LP";
+        symbol = "HMLP";
         conditionalTokens = _conditionalTokens;
         collateralToken = _collateralToken;
         conditionId = _conditionId;

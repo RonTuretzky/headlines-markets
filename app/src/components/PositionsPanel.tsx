@@ -5,10 +5,12 @@ import { CT, Resolution, useBalances, type MarketData } from "../hooks/useMarket
 import { fmtAmount } from "../lib/format";
 import { useWallet } from "../lib/wallet";
 import { explain } from "./TradeWidget";
+import { useToast } from "./Toast";
 
 /** Your YES/NO shares in this market + the Polymarket-style claim banner. */
 export function PositionsPanel({ m }: { m: MarketData }) {
   const wallet = useWallet();
+  const toast = useToast();
   const { data: bal } = useBalances(wallet.address, m);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -30,6 +32,9 @@ export function PositionsPanel({ m }: { m: MarketData }) {
         functionName: "redeemPositions",
         args: [m.collateral.address, m.conditionId, [1n, 2n]],
       });
+      if (winnings > 0n) {
+        toast.push({ kind: "success", title: `Redeemed ${fmtAmount(winnings, dec)}`, detail: m.question });
+      }
     } catch (e) {
       setError(explain(e));
     } finally {

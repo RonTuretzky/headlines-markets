@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button, Heading1 } from "@breadcoop/ui";
 import { useQueries } from "@tanstack/react-query";
+import { parseAbiItem } from "viem";
 import { abis } from "../contracts/gen";
 import { CT, Resolution, useCash, useMarkets, type MarketData } from "../hooks/useMarkets";
 import { fmtAmount, fmtCents } from "../lib/format";
@@ -17,7 +18,17 @@ interface Row {
   payoutDen: bigint;
   payoutYes: bigint;
   payoutNo: bigint;
+  // per-outcome average entry price (0..1) and net cost from the user's own trades
+  avg: [number, number];
+  cost: [bigint, bigint]; // net collateral spent per outcome (buys - sells)
 }
+
+const buyEvt = parseAbiItem(
+  "event Buy(address indexed buyer, uint256 investmentAmount, uint256 feeAmount, uint256 outcomeIndex, uint256 tokensBought)",
+);
+const sellEvt = parseAbiItem(
+  "event Sell(address indexed seller, uint256 returnAmount, uint256 feeAmount, uint256 outcomeIndex, uint256 tokensSold)",
+);
 
 export function PortfolioPage() {
   const wallet = useWallet();
@@ -43,7 +54,30 @@ export function PortfolioPage() {
             { address: CT, abi: abis.ConditionalTokens, functionName: "payoutNumerators", args: [m.conditionId, 1n] },
           ],
         })) as [bigint, bigint, bigint, bigint, bigint, bigint, bigint];
-        return { m, yes, no, lp, fees, payoutDen, payoutYes, payoutNo };
+
+        // the user's own trades -> average entry + net cost per outcome
+        const [myBuys, mySells] = await Promise.all([
+          publicClient.getLogs({ address: m.fpmm, event: buyEvt, args: { buyer: wallet.address }, fromBlock: 0n }),
+          publicClient.getLogs({ address: m.fpmm, event: sellEvt, args: { seller: wallet.address }, fromBlock: 0n }),
+        ]);
+        const boughtShares: [bigint, bigint] = [0n, 0n];
+        const boughtCost: [bigint, bigint] = [0n, 0n];
+        const cost: [bigint, bigint] = [0n, 0n];
+        for (const l of myBuys) {
+          const o = Number(l.args.outcomeIndex ?? 0n);
+          boughtShares[o] += l.args.tokensBought ?? 0n;
+          boughtCost[o] += l.args.investmentAmount ?? 0n;
+          cost[o] += l.args.investmentAmount ?? 0n;
+        }
+        for (const l of mySells) {
+          const o = Number(l.args.outcomeIndex ?? 0n);
+          cost[o] -= l.args.returnAmount ?? 0n;
+        }
+        const avg: [number, number] = [
+          boughtShares[0] > 0n ? Number(boughtCost[0]) / Number(boughtShares[0]) : 0,
+          boughtShares[1] > 0n ? Number(boughtCost[1]) / Number(boughtShares[1]) : 0,
+        ];
+        return { m, yes, no, lp, fees, payoutDen, payoutYes, payoutNo, avg, cost };
       },
     })),
   });
@@ -73,6 +107,24 @@ export function PortfolioPage() {
     return outcome + lpValue + Number(r.fees) / unit;
   };
   const totalDollars = positions.reduce((a, r) => a + rowDollars(r), 0);
+
+  // Return = current value + sale proceeds - amount invested (per outcome)
+  const returnCell = (r: Row, o: 0 | 1, dec: number) => {
+    const shares = o === 0 ? r.yes : r.no;
+    const priceNow =
+      r.payoutDen > 0n
+        ? Number(o === 0 ? r.payoutYes : r.payoutNo) / Number(r.payoutDen)
+        : Number(o === 0 ? r.m.priceYes : r.m.priceNo) / 1e18;
+    const value = (Number(shares) / 10 ** dec) * priceNow;
+    const net = value - Number(r.cost[o]) / 10 ** dec;
+    if (r.cost[o] === 0n && shares === 0n) return "—";
+    const cls = net >= 0 ? "text-system-green" : "text-system-red";
+    return (
+      <span className={cls}>
+        {net >= 0 ? "+" : "−"}${Math.abs(net).toLocaleString("en-US", { maximumFractionDigits: 2 })}
+      </span>
+    );
+  };
 
   const redeem = async (r: Row) => {
     setBusyId(r.m.id);
@@ -129,8 +181,10 @@ export function PortfolioPage() {
                 <th className="p-3">Market</th>
                 <th className="p-3">Outcome</th>
                 <th className="p-3 text-right">Qty</th>
+                <th className="p-3 text-right">Avg</th>
                 <th className="p-3 text-right">Current</th>
                 <th className="p-3 text-right">Value</th>
+                <th className="p-3 text-right">Return</th>
                 <th className="p-3 text-right"></th>
               </tr>
             </thead>
@@ -151,6 +205,7 @@ export function PortfolioPage() {
                       <td className="max-w-72 p-3">{marketCell}</td>
                       <td className="p-3 font-bold text-system-green">Yes</td>
                       <td className="p-3 text-right">{fmtAmount(r.yes, dec, { dollar: false })}</td>
+                      <td className="p-3 text-right">{r.avg[0] > 0 ? `${Math.round(r.avg[0] * 100)}¢` : "—"}</td>
                       <td className="p-3 text-right">
                         {isResolved
                           ? r.payoutYes > 0n
@@ -168,6 +223,7 @@ export function PortfolioPage() {
                           dec,
                         )}
                       </td>
+                      <td className="p-3 text-right">{returnCell(r, 0, dec)}</td>
                       <td className="p-3 text-right">
                         {isResolved && (
                           <Button
@@ -189,6 +245,7 @@ export function PortfolioPage() {
                       <td className="max-w-72 p-3">{marketCell}</td>
                       <td className="p-3 font-bold text-system-red">No</td>
                       <td className="p-3 text-right">{fmtAmount(r.no, dec, { dollar: false })}</td>
+                      <td className="p-3 text-right">{r.avg[1] > 0 ? `${Math.round(r.avg[1] * 100)}¢` : "—"}</td>
                       <td className="p-3 text-right">
                         {isResolved ? (r.payoutNo > 0n ? "100¢" : "0¢") : fmtCents(r.m.priceNo)}
                       </td>
@@ -202,6 +259,7 @@ export function PortfolioPage() {
                           dec,
                         )}
                       </td>
+                      <td className="p-3 text-right">{returnCell(r, 1, dec)}</td>
                       <td className="p-3 text-right">
                         {isResolved && r.yes === 0n && (
                           <Button
@@ -224,9 +282,11 @@ export function PortfolioPage() {
                       <td className="p-3 font-bold text-primary-jade">LP</td>
                       <td className="p-3 text-right">{fmtAmount(r.lp, dec, { dollar: false })}</td>
                       <td className="p-3 text-right">—</td>
+                      <td className="p-3 text-right">—</td>
                       <td className="p-3 text-right">
                         {r.fees > 0n ? `${fmtAmount(r.fees, dec)} fees` : "—"}
                       </td>
+                      <td className="p-3 text-right">—</td>
                       <td className="p-3 text-right">
                         <Link to={`/market/${r.m.id}`} className="text-caption font-bold text-core-orange underline">
                           Manage

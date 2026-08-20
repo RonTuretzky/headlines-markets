@@ -70,6 +70,19 @@ The mock prover also runs standalone:
 cd app && node scripts/prove-email.mjs ../emails/nyt-fed-cut.eml   # .eml -> EmailProof JSON
 ```
 
+### Real zk-regex circuits (optional, ~10 min one-time ptau)
+
+```bash
+cd app
+pnpm zk:build -- --from '^nytdirect@nytimes\.com$' --field 2 \
+  --content '(?i)fed (cuts|lowers|slashes) (interest )?rates'   # regex -> DFA -> circom -> Groth16
+pnpm zk:register        # deploy the generated verifier + register the pattern pair
+pnpm zk:verify -- --submit   # prove a sample email for real and settle onchain (~2s prove, ~330k gas)
+```
+
+Once registered, the app's compiled settle mode generates the Groth16 proof
+in-browser and the mock fallback is dead for that pattern.
+
 ## How settlement works
 
 A market is configured at creation with:
@@ -91,11 +104,15 @@ Two permissionless settlement paths, enforcing identical conditions:
   stores the quoted subject as evidence. ~2M gas (more with a long body). Great for
   demos and public evidence.
 - **Compiled** (gas-real, private) — `submitCompiledProof(sourceIndex,
-  CompiledEmailProof)`: the patterns are compiled *into the proving circuit*, which
-  only produces a proof for a matching DKIM-signed email. Onchain the market just
-  checks pattern commitments — no regex interpretation, no email content anywhere,
-  evidence via event. **~126k gas including YES resolution** (≈355k with a real
-  Groth16 pairing check) — a ~20-45x reduction.
+  CompiledEmailProof)`: the patterns are compiled *into a real Groth16 circuit*
+  (regex → DFA → circom, the zk-regex approach), which only produces a proof for a
+  matching email. Onchain the market checks pattern commitments and, when a circuit
+  is registered for the pair in `ZkRegexVerifierRegistry`, runs a **real pairing
+  check** — no regex interpretation, no email content anywhere, evidence via event.
+  **Measured: 329k gas including the Groth16 verify** (126k with the dev-mode mock
+  fallback for patterns without a compiled circuit) — a ~17x reduction vs the
+  transparent path. Registering a circuit permanently disables the mock fallback
+  for that pattern pair.
 
 Both dedupe by email nullifier (shared across paths) and count toward the same K-of-N
 threshold; the K-th distinct source reports payout `[1,0]` to ConditionalTokens;
@@ -120,7 +137,8 @@ Follows the Polymarket/Gnosis standard:
 | Component | Here (demo) | Production |
 |---|---|---|
 | Email authenticity | `MockZKEmailVerifier`: proof = keccak of the public fields; DKIM keys are deterministic mock hashes, permissionlessly registrable | zkEmail Groth16 circuit proving a real DKIM signature; DKIMRegistry fed by a DNSSEC oracle |
-| Regex | `RegexLib` interprets the pattern onchain over proof-revealed subject/body | pattern compiled into the zk circuit; only the match (or capture) is revealed |
+| Regex (transparent path) | `RegexLib` interprets the pattern onchain over proof-revealed subject/body | pattern compiled into the zk circuit |
+| Regex (compiled path) | **REAL**: regex → DFA → circom → Groth16; snarkjs proof verified onchain via pairing check (`pnpm zk:build` / `zk:register` / `zk:verify`) | same, plus a multi-party ceremony per circuit instead of the dev-mode local setup |
 | Everything else | ConditionalTokens, FPMM, factory, market lifecycle | identical — designed to swap the two mocks without touching the rest |
 
 Assumed (per spec): each newspaper publishes one canonical truth and never emails

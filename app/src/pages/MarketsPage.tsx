@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button, Heading1 } from "@breadcoop/ui";
 import { MarketCard } from "../components/MarketCard";
+import { MarketCardSkeleton } from "../components/Skeleton";
 import { Resolution, useMarkets } from "../hooks/useMarkets";
 
 type Sort = "newest" | "volume" | "liquidity" | "ending";
@@ -91,7 +92,13 @@ export function MarketsPage() {
           Could not reach the chain. Is anvil running and are the contracts deployed? ({String(error)})
         </div>
       )}
-      {isLoading && <p className="text-surface-grey-2">Loading markets…</p>}
+      {isLoading && (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {[0, 1, 2].map((i) => (
+            <MarketCardSkeleton key={i} />
+          ))}
+        </div>
+      )}
       {!isLoading && shown.length === 0 && (
         <div className="bread-card p-8 text-center">
           <p className="mb-3 font-bold">No markets found.</p>

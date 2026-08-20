@@ -1,6 +1,7 @@
 import { HashRouter, Route, Routes } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Header } from "./components/Header";
+import { ToastProvider } from "./components/Toast";
 import { WalletProvider } from "./lib/wallet";
 import { CreatePage } from "./pages/CreatePage";
 import { MarketPage } from "./pages/MarketPage";
@@ -15,6 +16,7 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <WalletProvider>
+        <ToastProvider>
         <HashRouter>
           <div className="min-h-screen">
             <Header />
@@ -30,6 +32,7 @@ export default function App() {
             </footer>
           </div>
         </HashRouter>
+        </ToastProvider>
       </WalletProvider>
     </QueryClientProvider>
   );

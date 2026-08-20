@@ -13,6 +13,7 @@ import {
   type EmailProofStruct,
   type ParsedEmail,
 } from "../lib/prover";
+import { buildRealCompiledProof, fetchCircuitMeta, type CircuitMeta } from "../lib/realProver";
 import { publicClient, useWallet } from "../lib/wallet";
 import { explain } from "./TradeWidget";
 
@@ -22,7 +23,8 @@ interface Candidate {
   parsed: ParsedEmail;
   mode: SettleMode;
   proof: EmailProofStruct | null; // transparent mode
-  compiledProof: CompiledProofStruct | null; // compiled mode
+  compiledProof: CompiledProofStruct | null; // compiled mode (mock fallback)
+  circuitMeta: CircuitMeta | null; // real Groth16 circuit available for this pattern pair
   sourceIndex: number | null; // the source whose domain matches (domains are unique per market)
   checked: { ok: boolean; reason: string } | null;
 }
@@ -50,26 +52,35 @@ export function ResolutionPanel({ m }: { m: MarketData }) {
       const parsed = parseEml(raw);
       const sourceIndex = m.sources.findIndex((s) => s.dkimDomain === parsed.domainName);
       if (sourceIndex < 0) {
-        setCandidate({ parsed, mode, proof: null, compiledProof: null, sourceIndex: null, checked: null });
+        setCandidate({ parsed, mode, proof: null, compiledProof: null, circuitMeta: null, sourceIndex: null, checked: null });
         return;
       }
       const src = m.sources[sourceIndex];
       let checked: Candidate["checked"] = null;
       if (mode === "compiled") {
-        // The "circuit" evaluates the patterns locally; content never goes onchain.
+        // The circuit evaluates the patterns locally; content never goes onchain.
+        // buildCompiledProof throws if the email wouldn't satisfy the circuit.
         const compiledProof = buildCompiledProof(parsed, {
           fromRegex: src.fromRegex,
           contentField: m.contentField,
           contentPattern: src.contentRegex || m.contentRegex,
         });
-        const [ok, reason] = (await publicClient.readContract({
-          address: m.market,
-          abi: abis.HeadlineMarket,
-          functionName: "checkCompiledProof",
-          args: [BigInt(sourceIndex), compiledProof],
-        })) as [boolean, string];
-        checked = { ok, reason };
-        setCandidate({ parsed, mode, proof: null, compiledProof, sourceIndex, checked });
+        // Real Groth16 circuit registered for this pattern pair? Then the proof is
+        // generated with snarkjs at submit time (proving takes a moment).
+        const circuitMeta = await fetchCircuitMeta("", src.fromRegex, m.contentField, src.contentRegex || m.contentRegex);
+        if (circuitMeta) {
+          checked = { ok: true, reason: "" }; // local circuit evaluation passed above
+          setCandidate({ parsed, mode, proof: null, compiledProof, circuitMeta, sourceIndex, checked });
+        } else {
+          const [ok, reason] = (await publicClient.readContract({
+            address: m.market,
+            abi: abis.HeadlineMarket,
+            functionName: "checkCompiledProof",
+            args: [BigInt(sourceIndex), compiledProof],
+          })) as [boolean, string];
+          checked = { ok, reason };
+          setCandidate({ parsed, mode, proof: null, compiledProof, circuitMeta: null, sourceIndex, checked });
+        }
       } else {
         const proof = buildProof(parsed);
         const [ok, reason] = (await publicClient.readContract({
@@ -79,7 +90,7 @@ export function ResolutionPanel({ m }: { m: MarketData }) {
           args: [BigInt(sourceIndex), proof],
         })) as [boolean, string];
         checked = { ok, reason };
-        setCandidate({ parsed, mode, proof, compiledProof: null, sourceIndex, checked });
+        setCandidate({ parsed, mode, proof, compiledProof: null, circuitMeta: null, sourceIndex, checked });
       }
     } catch (e) {
       setFileError(explain(e));
@@ -103,14 +114,32 @@ export function ResolutionPanel({ m }: { m: MarketData }) {
       if (!registered) {
         await wallet.write({ address: DKIM, abi: abis.MockDKIMRegistry, functionName: "registerMockKey", args: [domain] });
       }
+      let proofArg: CompiledProofStruct | EmailProofStruct =
+        candidate.mode === "compiled" ? candidate.compiledProof! : candidate.proof!;
+      if (candidate.mode === "compiled" && candidate.circuitMeta) {
+        // REAL zk-regex: generate the Groth16 proof in-browser with snarkjs.
+        setBusy("proving");
+        const meta = candidate.circuitMeta;
+        proofArg = await buildRealCompiledProof(
+          candidate.parsed,
+          meta,
+          `/circuits/${meta.pairHash}/pattern.wasm`,
+          `/circuits/${meta.pairHash}/pattern.zkey`,
+        );
+        setBusy("proof");
+        const [ok, reason] = (await publicClient.readContract({
+          address: m.market,
+          abi: abis.HeadlineMarket,
+          functionName: "checkCompiledProof",
+          args: [BigInt(candidate.sourceIndex), proofArg as CompiledProofStruct],
+        })) as [boolean, string];
+        if (!ok) throw new Error(`onchain check rejected the zk proof: ${reason}`);
+      }
       await wallet.write({
         address: m.market,
         abi: abis.HeadlineMarket,
         functionName: candidate.mode === "compiled" ? "submitCompiledProof" : "submitProof",
-        args: [
-          BigInt(candidate.sourceIndex),
-          candidate.mode === "compiled" ? candidate.compiledProof! : candidate.proof!,
-        ],
+        args: [BigInt(candidate.sourceIndex), proofArg],
       });
       setSettledNote(`Proof accepted for ${m.sources[candidate.sourceIndex].name}.`);
       setCandidate(null);
@@ -134,8 +163,7 @@ export function ResolutionPanel({ m }: { m: MarketData }) {
   };
 
   return (
-    <div className="bread-card p-4" data-testid="resolution-panel">
-      <h3 className="mb-1 font-breadDisplay text-lg font-bold uppercase">Resolution</h3>
+    <div data-testid="resolution-panel">
       <p className="mb-3 text-sm text-surface-grey-2">
         Anyone can settle this market: submit a zkEmail proof of a matching breaking-news alert email.{" "}
         {m.threshold} of {m.sources.length} sources required for YES.
@@ -243,8 +271,15 @@ export function ResolutionPanel({ m }: { m: MarketData }) {
               </div>
               {candidate.mode === "compiled" && (
                 <p className="mb-2 text-caption text-surface-grey-2" data-testid="compiled-note">
-                  The market's patterns are compiled into the circuit; the proof only certifies "a matching
-                  DKIM-signed email exists". The fields below stay local — only pattern commitments go onchain.
+                  {candidate.circuitMeta ? (
+                    <span data-testid="real-circuit-badge">
+                      <b className="text-primary-jade">Real Groth16 circuit registered</b> — a zk proof will be
+                      generated in your browser on submit (~10-60s).{" "}
+                    </span>
+                  ) : (
+                    <span>No compiled circuit for this pattern yet — dev-mode mock proof. </span>
+                  )}
+                  The fields below stay local — only pattern commitments go onchain.
                 </p>
               )}
               <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
@@ -278,11 +313,15 @@ export function ResolutionPanel({ m }: { m: MarketData }) {
                 data-testid="submit-proof"
                 className="mt-3 w-full"
                 disabled={!candidate.checked?.ok || !!busy}
-                isLoading={busy === "proof"}
+                isLoading={busy === "proof" || busy === "proving"}
                 showChildrenWhenLoading
                 onClick={submitProof}
               >
-                {busy === "proof" ? "Submitting proof" : "Submit proof & settle"}
+                {busy === "proving"
+                  ? "Generating zk proof…"
+                  : busy === "proof"
+                    ? "Submitting proof"
+                    : "Submit proof & settle"}
               </Button>
             </div>
           )}

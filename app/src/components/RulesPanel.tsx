@@ -10,8 +10,7 @@ const FIELD_LABEL: Record<ContentField, string> = {
 /** Polymarket's "Rules" section: verbatim resolution criteria + resolver transparency. */
 export function RulesPanel({ m }: { m: MarketData }) {
   return (
-    <div className="bread-card p-4" data-testid="rules-panel">
-      <h3 className="mb-2 font-breadDisplay text-lg font-bold uppercase">Rules</h3>
+    <div data-testid="rules-panel">
       <p className="mb-3 whitespace-pre-wrap text-sm">{m.description}</p>
 
       <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-sm">
