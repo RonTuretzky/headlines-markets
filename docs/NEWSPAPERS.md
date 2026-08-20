@@ -15,6 +15,12 @@ demo market end-to-end:
 
 - **DKIM**: `d=nytimes.com; s=scph20250409; a=rsa-sha256` — the selector the DNS
   probing couldn't recover. SparkPost `scph`-prefixed selector, as predicted.
+- **Key rotation**: the selector date-stamps the key's deployment (2025-04-09), i.e.
+  NYT rotates keys but slowly — this one was still the active signer 16 months later.
+  Live DNS shows it is RSA-4096. Rotated-out selectors disappear from DNS, so a
+  production DKIMRegistry must *archive* keys with validity windows while they are
+  live, or proofs of pre-rotation emails become unverifiable (backlog A2; zk.email's
+  key-archive service exists for exactly this reason).
 - **Sender (Today's Headlines digest)**: `todaysheadlines-noreply@nytimes.com`,
   display name "The New York Times". So NYT uses *per-product* local-parts:
   `nytdirect@` for classic alerts, `todaysheadlines-noreply@` for the digest —
