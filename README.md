@@ -10,8 +10,10 @@ breaking-news alert email**. Anyone can permissionlessly:
 
 The token layer reimplements the Conditional Tokens model Polymarket settles on;
 trading runs through a Gnosis-style fixed-product AMM (Polymarket's original venue).
-The zkEmail verifier and the onchain regex engine are mocks with production shapes —
-see [Trust model](#trust-model--whats-mocked).
+Settlement is **real DKIM verification**: an email's RSA-SHA256 signature is checked
+onchain (modexp precompile) against the sending domain's real published public key —
+the same operation an inbound mail server performs. The real New York Times key and a
+real NYT email verify end to end.
 
 ```
 ┌─────────────┐   creates    ┌────────────────┐   oracle-reports   ┌───────────────────┐
@@ -29,9 +31,9 @@ see [Trust model](#trust-model--whats-mocked).
 
 | Path | What |
 |---|---|
-| `contracts/` | Foundry project: RegexLib, ConditionalTokens, HeadlineMarket, FPMM, factory, mocks, 71-test suite incl. a JS-differential regex test |
+| `contracts/` | Foundry project: RegexLib, ConditionalTokens, HeadlineMarket, FPMM, EIP-1167 factory, **real DKIM verification** (RSAVerify + DKIMRegistry + DKIMVerifier), 75-test suite |
 | `app/` | Vite + React frontend built with [`@breadcoop/ui`](https://github.com/BreadchainCoop/bread-ui-kit) (bread-ui-kit), viem, Playwright e2e |
-| `emails/` | Sample `.eml` files (real verified senders/subject formats, mock DKIM sigs) |
+| `emails/` | Sample `.eml` files, DKIM-signed by the committed dev key (`pnpm dkim:sign-fixtures`) |
 | `docs/` | [Architecture](docs/ARCHITECTURE.md) · [User flows](docs/USER-FLOWS.md) · [Newspapers](docs/NEWSPAPERS.md) · [Polymarket-parity backlog](docs/BACKLOG.md) |
 
 ## Quickstart
@@ -60,7 +62,7 @@ proof reaches the 2-of-3 threshold and resolves YES.
 ### Tests
 
 ```bash
-cd contracts && forge test        # 71 tests: unit, integration, fuzz + JS-differential regex
+cd contracts && forge test        # 75 tests: real RSA/DKIM, regex diff-vs-JS, CTF, FPMM, e2e
 cd app && pnpm e2e                # 9 Playwright flows on an isolated anvil (port 8548)
 ```
 
@@ -97,27 +99,21 @@ A market is configured at creation with:
 - **window / deadline / buffer** — accepted email `Date` range; after
   `deadline + buffer` anyone can resolve NO.
 
-Two permissionless settlement paths, enforcing identical conditions:
+`submitProof(sourceIndex, EmailProof)` — the proof carries the email's canonicalized
+signed headers + its real RSA signature. Onchain, `DKIMVerifier`:
+1. looks up the sending domain's RSA public key in `DKIMRegistry` (real DNS keys),
+2. verifies the RSA-SHA256 signature over the header bytes (`RSAVerify` + the modexp
+   precompile) — genuine DKIM verification, and
+3. binds the extracted From/Subject by requiring they appear in the authenticated
+   header.
+The market then runs its regex (onchain `RegexLib`) over the **DKIM-verified Subject**,
+dedupes by email nullifier, and marks the source. The K-th distinct source reports
+payout `[1,0]` to ConditionalTokens; `resolveNo()` reports `[0,1]` after deadline +
+buffer. The market contract *is* the oracle — no human, committee, or mock in the loop.
 
-- **Transparent** — `submitProof(sourceIndex, EmailProof)`: the proof reveals the
-  From/subject/body excerpt; the market runs the regexes *onchain* (RegexLib) and
-  stores the quoted subject as evidence. ~2M gas (more with a long body). Great for
-  demos and public evidence.
-- **Compiled** (gas-real, private) — `submitCompiledProof(sourceIndex,
-  CompiledEmailProof)`: the patterns are compiled *into a real Groth16 circuit*
-  (regex → DFA → circom, the zk-regex approach), which only produces a proof for a
-  matching email. Onchain the market checks pattern commitments and, when a circuit
-  is registered for the pair in `ZkRegexVerifierRegistry`, runs a **real pairing
-  check** — no regex interpretation, no email content anywhere, evidence via event.
-  **Measured: 329k gas including the Groth16 verify** (126k with the dev-mode mock
-  fallback for patterns without a compiled circuit) — a ~17x reduction vs the
-  transparent path. Registering a circuit permanently disables the mock fallback
-  for that pattern pair.
-
-Both dedupe by email nullifier (shared across paths) and count toward the same K-of-N
-threshold; the K-th distinct source reports payout `[1,0]` to ConditionalTokens;
-`resolveNo()` reports `[0,1]` after deadline + buffer. The market contract *is* the
-oracle — no human or committee sits in the loop.
+A separate **zk-regex research track** (`app/scripts/zkregex`) compiles a pattern to a
+real Groth16 circuit (regex → DFA → circom, differentially tested on 12k cases) toward
+privacy-preserving settlement — see backlog A3; it is decoupled from the live path.
 
 ## Market token management
 
@@ -132,16 +128,17 @@ Follows the Polymarket/Gnosis standard:
   configurable fee accruing to LP shares, `distributionHint` sets opening odds.
   Prices are probabilities — displayed in cents, Polymarket-style.
 
-## Trust model — what's mocked
+## Trust model — what's real, what's assumed
 
-| Component | Here (demo) | Production |
+| Component | Here | Production delta |
 |---|---|---|
-| Email authenticity | `MockZKEmailVerifier`: proof = keccak of the public fields; DKIM keys are deterministic mock hashes, permissionlessly registrable | zkEmail Groth16 circuit proving a real DKIM signature; DKIMRegistry fed by a DNSSEC oracle |
-| Regex (transparent path) | `RegexLib` interprets the pattern onchain over proof-revealed subject/body | pattern compiled into the zk circuit |
-| Regex (compiled path) | **REAL**: regex → DFA → circom → Groth16; snarkjs proof verified onchain via pairing check (`pnpm zk:build` / `zk:register` / `zk:verify`) | same, plus a multi-party ceremony per circuit instead of the dev-mode local setup |
-| Everything else | ConditionalTokens, FPMM, factory, market lifecycle | identical — designed to swap the two mocks without touching the rest |
+| Email authenticity | **REAL** DKIM: RSA-SHA256 verified onchain (`RSAVerify` + modexp) against the domain's real public key in `DKIMRegistry`. The real NYT key + a real NYT email verify end to end. | Add key-rotation validity windows fed by a DNSSEC oracle (backlog A2); fold the DKIM RSA + SHA-256 into a zk circuit for private settlement (A1). |
+| Test fixtures | The sample `.eml`s are signed by a **real** committed dev RSA key (`keys/dev-dkim.pub`), registered in the registry — real signatures, real verification, dev key (we can't hold NYT's private key). | Real senders sign their own real emails. |
+| Regex | **REAL** onchain matcher (`RegexLib`) over the DKIM-verified Subject. | Compile to a zk circuit for privacy (A3; `app/scripts/zkregex` already does regex→DFA→Groth16). |
+| Tokens / AMM / factory | **REAL** ConditionalTokens, FPMM, EIP-1167 clone factory. | Unchanged. |
 
 Assumed (per spec): each newspaper publishes one canonical truth and never emails
 conflicting alerts. The threshold K exists so a single compromised newsroom email
-pipeline can't settle a market alone. See the [backlog](docs/BACKLOG.md) for the
-adversarial-case roadmap (disputes, bonds, UMA-style escalation).
+pipeline can't settle a market alone. Known limitation: only the **Subject** is bound
+by the header signature — Body-field conditions need the DKIM body-hash (`bh=`) check
+(backlog A4). See the [backlog](docs/BACKLOG.md) for the full roadmap.

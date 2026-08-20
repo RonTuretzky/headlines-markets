@@ -1,13 +1,11 @@
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=email.reuters.com;
+ s=dev2026; t=1786558069; bh=lPMM27FQwZwdbnhu3clq7r49Oi4E326XHjnC8tyua+0=;
+ h=from:subject:date:to;
+ b=kDu3lgZ5AmDgtmaWYp9WHDAPDNrjVPSAhvwVbmR/cV7BSBEsBUJ7v0vnT8BhzuBtBTHoCrG/CoPrr0kR7IAPFsMDkqWd/Vevl4L5DNXq4ZkvVQwoqmko9ZZlIIB672jUe3CjRrfhw3lDISLn90s+V+KjOh75tDiQq+o9Q6uwp5r/v9F4pC7bE+wiB+9iG+Px6ySRKGyy30dFybb0XTIbgdNGELU/PcmPGT7dNsEGK+WOU7F0D2GLdTlWFJyTlMWOYp8RJTC+VCv7/BBF6ILiPnIMkST51dbrs/KSRAFmupokj0bNkR2XH8x0q8c5q0itucmu2uztSccNcKF3Vw51lw==
 Delivered-To: subscriber@example.com
 Received: from o1.sailthru-out.reuters.com (o1.sailthru-out.reuters.com [107.21.14.88])
         by mx.example.com with ESMTPS id k1l2m3n4o5
         for <subscriber@example.com>; Wed, 12 Aug 2026 14:07:52 -0400 (EDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=email.reuters.com; s=sailthru;
-        h=from:to:subject:date:mime-version:content-type; t=1786558069;
-        bh=bW9ja2JvZHloYXNocmV1dGVyc2ZlZGN1dDIwMjY=;
-        b=TW9jayBES0lNIHNpZ25hdHVyZSBmb3IgdGhlIFJldXRlcnMgYnJlYWtpbmctbmV3cyBhbGVy
-        dC4gU3RydWN0dXJhbGx5IGZhaXRoZnVsIHRvIHJlYWwgU2FpbHRocnUgaGVhZGVycywgbm90
-        IGNyeXB0b2dyYXBoaWNhbGx5IHZhbGlkLg==
 From: Reuters News <newsletters@email.reuters.com>
 To: subscriber@example.com
 Subject: BREAKING: Fed cuts interest rates by 50 bps in emergency move

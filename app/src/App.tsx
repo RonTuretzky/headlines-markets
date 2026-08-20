@@ -28,7 +28,7 @@ export default function App() {
             </Routes>
             <footer className="mt-12 border-t-2 border-surface-ink bg-paper-0 px-4 py-6 text-center text-caption text-surface-grey-2">
               Headlines — prediction markets settled by zkEmail proofs of newspaper breaking-news alerts.
-              Local demo: mock verifier + anvil. Built on the Conditional Tokens model Polymarket uses.
+              Local demo on anvil: real DKIM (RSA-SHA256) signatures verified onchain, Conditional Tokens settlement à la Polymarket.
             </footer>
           </div>
         </HashRouter>

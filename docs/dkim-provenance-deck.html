@@ -1,0 +1,689 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DKIM Key Provenance — how trustless can it get?</title>
+<style>
+  :root{
+    color-scheme: dark;
+    --page:#0d0d0d; --surface:#1a1a19;
+    --ink:#ffffff; --ink-2:#c3c2b7; --muted:#898781;
+    --grid:#2c2c2a; --baseline:#383835; --border:rgba(255,255,255,.10);
+    --s1:#3987e5; --s2:#d95926; --s3:#199e70;
+    --good:#0ca30c; --warn:#fab219; --serious:#ec835a; --critical:#d03b3b;
+    --t0:#cde2fb; --t1:#9ec5f4; --t2:#6da7ec; --t3:#3987e5; --t4:#256abf; --t5:#184f95;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  *{box-sizing:border-box; margin:0; padding:0}
+  html,body{height:100%; overflow:hidden}
+  body{
+    background:var(--page); color:var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: clamp(14px, 1.35vw, 17px); line-height:1.5;
+  }
+  .progress{position:fixed; top:0; left:0; right:0; height:3px; background:var(--grid); z-index:30}
+  .progress i{display:block; height:100%; width:0; background:var(--s1); transition:width .25s ease}
+
+  .slide{
+    position:absolute; inset:0; display:none; overflow-y:auto;
+    padding: 7vh 6vw 9vh;
+  }
+  .slide.active{display:flex; flex-direction:column; justify-content:center; animation:in .35s ease}
+  @keyframes in{from{opacity:0; transform:translateY(10px)}to{opacity:1; transform:none}}
+  .wrap{max-width:1120px; width:100%; margin:0 auto}
+
+  .kicker{
+    display:flex; align-items:center; gap:10px;
+    font-size:.72em; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--muted); margin-bottom:18px; font-weight:600;
+  }
+  .kicker::before{content:""; width:26px; height:2px; background:var(--s1)}
+  h1{font-size:clamp(30px, 4.4vw, 56px); line-height:1.08; letter-spacing:-.02em; margin-bottom:22px; font-weight:750}
+  h2{font-size:clamp(24px, 3vw, 38px); line-height:1.12; letter-spacing:-.015em; margin-bottom:20px; font-weight:700}
+  h3{font-size:1.02em; margin-bottom:8px; font-weight:650}
+  .sub{color:var(--ink-2); font-size:clamp(16px,1.6vw,20px); max-width:56ch}
+  .accent{color:var(--s1)}
+  em{font-style:italic}
+  p{color:var(--ink-2)}
+  strong{color:var(--ink); font-weight:650}
+  code{font-family:var(--mono); font-size:.9em; color:var(--ink); background:var(--surface); border:1px solid var(--border); border-radius:5px; padding:1px 6px}
+
+  .card{background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:20px 22px}
+  .cards2{display:grid; grid-template-columns:1fr 1fr; gap:16px}
+  .cards3{display:grid; grid-template-columns:repeat(3,1fr); gap:16px}
+  @media (max-width:840px){ .cards2,.cards3{grid-template-columns:1fr} }
+  .card .tag{display:inline-block; font-size:.7em; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); font-weight:650; margin-bottom:10px}
+  .card p{font-size:.94em}
+  .card + .card, .cards2 + .card, .card + .cards2{margin-top:16px}
+
+  ul.tight{list-style:none}
+  ul.tight li{padding-left:20px; position:relative; margin:7px 0; color:var(--ink-2); font-size:.96em}
+  ul.tight li::before{content:"—"; position:absolute; left:0; color:var(--s1)}
+  ul.tight li strong{color:var(--ink)}
+
+  .formula{
+    font-family:var(--mono); font-size:clamp(16px,2vw,24px); color:var(--ink);
+    background:var(--surface); border:1px solid var(--border); border-radius:12px;
+    padding:20px 24px; margin:18px 0;
+  }
+  .formula .q{color:var(--ink-2); font-family:system-ui,-apple-system,"Segoe UI",sans-serif; font-size:.72em; display:block; margin-top:10px}
+
+  /* status chips (census) */
+  .chipgrid{display:flex; flex-wrap:wrap; gap:8px; margin-top:10px}
+  .chip{
+    display:inline-flex; align-items:center; gap:7px;
+    font-family:var(--mono); font-size:.82em; color:var(--ink);
+    background:var(--surface); border:1px solid var(--border); border-radius:999px;
+    padding:5px 12px; cursor:default;
+  }
+  .chip .ic{font-size:.95em; font-weight:700}
+  .chip.ok  .ic{color:var(--good)}
+  .chip.bad .ic{color:var(--critical)}
+  .chip.part .ic{color:var(--serious)}
+  .chip.ok{border-color:rgba(12,163,12,.45)}
+  .chip.bad{border-color:rgba(208,59,59,.40)}
+  .chip.part{border-color:rgba(236,131,90,.45)}
+  .group{margin:14px 0}
+  .group .glabel{font-size:.78em; letter-spacing:.09em; text-transform:uppercase; color:var(--muted); font-weight:650}
+  .legendrow{display:flex; gap:18px; flex-wrap:wrap; margin-top:16px; font-size:.82em; color:var(--ink-2)}
+  .legendrow span{display:inline-flex; align-items:center; gap:6px}
+
+  /* chains */
+  .chain{display:flex; align-items:center; flex-wrap:wrap; gap:0; margin:6px 0}
+  .node{
+    font-family:var(--mono); font-size:.78em; color:var(--ink);
+    background:var(--surface); border:1px solid var(--border); border-radius:8px;
+    padding:6px 10px; display:inline-flex; align-items:center; gap:6px; white-space:nowrap;
+  }
+  .node .ic{font-weight:700}
+  .node.ok .ic{color:var(--good)} .node.bad .ic{color:var(--critical)}
+  .node.ok{border-color:rgba(12,163,12,.45)} .node.bad{border-color:rgba(208,59,59,.5)}
+  .link{width:26px; height:1px; background:var(--baseline); flex:none}
+  .link.broken{background:repeating-linear-gradient(90deg,var(--critical) 0 4px,transparent 4px 8px)}
+  .chainrow{padding:12px 0; border-bottom:1px solid var(--grid)}
+  .chainrow:last-child{border-bottom:none}
+  .chainrow .verdict{font-size:.85em; color:var(--ink-2); margin-top:6px}
+  .chainrow .verdict b{color:var(--ink); font-weight:650}
+
+  /* timeline */
+  .tl{position:relative; margin-top:14px}
+  .tl .vline{position:absolute; top:0; bottom:26px; width:1px; background:var(--grid)}
+  .tl .nowline{position:absolute; top:-6px; bottom:26px; width:1px;
+    background:repeating-linear-gradient(180deg,var(--ink-2) 0 4px,transparent 4px 8px)}
+  .tl .nowlab{position:absolute; top:-24px; transform:translateX(-50%); font-size:.72em; color:var(--ink-2)}
+  .lane{display:grid; grid-template-columns:150px 1fr; align-items:center; height:30px}
+  .lane .lab{font-family:var(--mono); font-size:.78em; color:var(--ink-2); padding-right:12px; text-align:right}
+  .lane .track{position:relative; height:100%}
+  .bar{position:absolute; top:7px; height:16px; border-radius:4px; cursor:default}
+  .bar:hover{filter:brightness(1.18)}
+  .bar.live::after{content:"live"; position:absolute; right:-38px; top:0; font-size:.68rem; color:var(--ink-2); font-family:var(--mono)}
+  .axis{display:grid; grid-template-columns:150px 1fr; margin-top:4px}
+  .axis .ticks{position:relative; height:22px; border-top:1px solid var(--baseline)}
+  .axis .tick{position:absolute; top:4px; transform:translateX(-50%); font-size:.72em; color:var(--muted)}
+  .annot{position:absolute; font-size:.72em; color:var(--warn); white-space:nowrap}
+  details.tbl{margin-top:14px}
+  details.tbl summary{cursor:pointer; color:var(--muted); font-size:.82em}
+  details.tbl table{width:100%; border-collapse:collapse; margin-top:8px; font-size:.82em}
+  details.tbl th,details.tbl td{text-align:left; padding:5px 10px; border-bottom:1px solid var(--grid); color:var(--ink-2); font-variant-numeric:tabular-nums}
+  details.tbl th{color:var(--muted); font-weight:600}
+  details.tbl td:first-child{font-family:var(--mono)}
+
+  /* tier ladder */
+  .tier{display:grid; grid-template-columns:56px 1fr auto; gap:14px; align-items:center; padding:9px 0; border-bottom:1px solid var(--grid)}
+  .tier:last-child{border-bottom:none}
+  .tchip{width:48px; height:30px; border-radius:6px; display:grid; place-items:center; font-weight:750; font-size:.85em}
+  .tier .tname{font-weight:650}
+  .tier .tdesc{color:var(--ink-2); font-size:.9em}
+  .tier .troot{font-size:.72em; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); font-weight:650; white-space:nowrap}
+
+  /* trilemma */
+  .tri{display:grid; grid-template-columns:1fr 1fr; gap:16px; align-items:start}
+  @media (max-width:840px){.tri{grid-template-columns:1fr}}
+  .tri svg text{fill:var(--ink); font-size:13px; font-weight:600}
+  .tri svg .edge{stroke:var(--baseline); stroke-width:1.5}
+  .tri svg .edge.dead{stroke:var(--critical); stroke-dasharray:4 5}
+  .tri svg .elab{fill:var(--ink-2); font-size:11.5px; font-weight:500}
+  .tri svg .elab.dead{fill:var(--critical)}
+
+  /* stats */
+  .stats{display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:18px}
+  @media (max-width:840px){.stats{grid-template-columns:1fr}}
+  .stat .v{font-size:clamp(26px,3vw,40px); font-weight:750; letter-spacing:-.02em}
+  .stat .l{color:var(--muted); font-size:.82em; margin-top:4px}
+
+  /* build plan */
+  .step{display:grid; grid-template-columns:44px 1fr; gap:16px; padding:12px 0; border-bottom:1px solid var(--grid); align-items:start}
+  .step:last-child{border-bottom:none}
+  .step .n{width:34px; height:34px; border-radius:50%; border:1.5px solid var(--s1); color:var(--s1); display:grid; place-items:center; font-weight:700; font-size:.95em}
+  .step h3 .bt{font-size:.68em; font-family:var(--mono); color:var(--warn); border:1px solid rgba(250,178,25,.4); border-radius:5px; padding:1px 7px; margin-left:8px; vertical-align:2px}
+  .step p{font-size:.92em}
+
+  /* closer */
+  .bigword{font-size:clamp(40px,6.5vw,84px); font-weight:800; letter-spacing:-.03em; line-height:1.06; display:flex; align-items:baseline; gap:18px}
+  .bigword small{font-size:.28em; font-weight:500; color:var(--muted); letter-spacing:0}
+  .bigword::before{content:""; width:14px; height:14px; border-radius:4px; flex:none; align-self:center}
+  .bw0::before{background:var(--t0)} .bw1::before{background:var(--t2)} .bw2::before{background:var(--t4)}
+
+  .foot{margin-top:26px; color:var(--muted); font-size:.8em; font-family:var(--mono)}
+
+  /* hud */
+  .hud{position:fixed; right:18px; bottom:14px; display:flex; align-items:center; gap:10px; z-index:30;
+       color:var(--muted); font-variant-numeric:tabular-nums; font-size:.85em}
+  .hud button{background:var(--surface); color:var(--ink-2); border:1px solid var(--border); border-radius:8px;
+       width:34px; height:30px; font-size:16px; cursor:pointer}
+  .hud button:hover{color:var(--ink); border-color:rgba(255,255,255,.25)}
+  .hint{position:fixed; left:18px; bottom:14px; color:var(--muted); font-size:.75em; z-index:30}
+
+  #tip{position:fixed; z-index:50; display:none; max-width:320px; pointer-events:none;
+       background:#242423; border:1px solid rgba(255,255,255,.16); border-radius:8px;
+       padding:8px 11px; font-size:.8em; color:var(--ink-2); box-shadow:0 6px 24px rgba(0,0,0,.5)}
+  #tip b{color:var(--ink)}
+</style>
+</head>
+<body data-palette="#3987e5,#d95926,#199e70">
+
+<div class="progress"><i id="pbar"></i></div>
+
+<!-- 1 · TITLE -->
+<section class="slide" aria-label="Title">
+  <div class="wrap">
+    <div class="kicker">zkEmail prediction markets · research deep-dive</div>
+    <h1>How trustless can<br>DKIM key provenance get?</h1>
+    <p class="sub">The zk proof makes the email trustless <em>given the key</em>.
+    The key always needs an oracle. This deck is about how <strong>small, ephemeral,
+    and accountable</strong> that oracle can be made — grounded in DNS measurements, not vibes.</p>
+    <div class="foot">measured live 2026-08-20 · full memo: docs/DKIM-PROVENANCE.md · backlog A2</div>
+  </div>
+</section>
+
+<!-- 2 · THE PROBLEM -->
+<section class="slide" aria-label="The problem">
+  <div class="wrap">
+    <div class="kicker">the problem</div>
+    <h2>There is no key chain. There never was.</h2>
+    <div class="formula">P(D, s, K, [t₀, t₁])
+      <span class="q">“the global DNS served key K at <b>s</b>._domainkey.<b>D</b> throughout [t₀, t₁]” — the one statement a registry must vouch for.</span>
+    </div>
+    <ul class="tight">
+      <li><strong>RFC 6376 defines no chaining.</strong> Each key is an independent TXT record; when NYT rotated to <code>scph20250409</code>, nothing was signed, endorsed, or referenced by its predecessor.</li>
+      <li><strong>Emails can’t bootstrap it.</strong> A signed email proves possession of a private key — not that DNS ever published its public half.</li>
+      <li><strong>The only trust root</strong> is control of a DNS zone at the moment you look. And nytimes.com’s zone isn’t DNSSEC-signed.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- 3 · TWO HARD TRUTHS -->
+<section class="slide" aria-label="Two hard truths">
+  <div class="wrap">
+    <div class="kicker">bounds on every design</div>
+    <h2>Two hard truths</h2>
+    <div class="cards2">
+      <div class="card">
+        <span class="tag">truth 1</span>
+        <h3>DNS has no canonical state</h3>
+        <p>There is no root commitment to “what DNS says” (except under DNSSEC). Split-horizon,
+        GeoDNS, anycast, propagation: two honest observers can see different answers at the same
+        instant. Without the zone owner’s signature, truth is only definable
+        <strong>observationally</strong> — what k of n independent vantages saw over a window.</p>
+      </div>
+      <div class="card">
+        <span class="tag">truth 2</span>
+        <h3>The ceiling is DNS itself</h3>
+        <p>Whoever controls the zone <em>is</em> the domain, per DKIM’s own model — every mail
+        receiver on earth accepts their mail too. An oracle can at best <strong>faithfully report
+        DNS</strong>; it cannot exceed it.</p>
+      </div>
+    </div>
+    <div class="card" style="border-color:rgba(57,135,229,.45)">
+      <p><strong>So the achievable goal, precisely:</strong> close the gap between <em>what DNS actually
+      served</em> and <em>what the registry believes</em> — and make the residual trust
+      <strong>small, ephemeral, and accountable</strong>. Never zero.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 4 · CT INSIGHT -->
+<section class="slide" aria-label="The CT insight">
+  <div class="wrap">
+    <div class="kicker">the key move · borrowed from certificate transparency</div>
+    <h2>Trust can be made <span class="accent">ephemeral</span><br>even when it can’t be eliminated</h2>
+    <p class="sub" style="margin-bottom:18px">CT didn’t remove trust in CAs — it made CA misbehavior
+    detectable and permanent. Transplant that: commit every key observation to an immutable log
+    <em>at observation time</em>. Observers are trusted only at that instant; afterwards the record
+    is math. A committee corrupted in 2027 cannot rewrite what it attested in 2026.</p>
+    <div class="card" style="border-color:rgba(250,178,25,.4)">
+      <p><strong>Corollary — you cannot observe the past.</strong> History that wasn’t witnessed is
+      unrecoverable trustlessly. Every day the log isn’t running is provenance permanently lost.
+      That’s the NYT archival problem inverted into an action item: <strong>start the log now.</strong></p>
+    </div>
+  </div>
+</section>
+
+<!-- 5 · TRILEMMA -->
+<section class="slide" aria-label="Trilemma">
+  <div class="wrap">
+    <div class="kicker">the trilemma</div>
+    <h2>Pick two</h2>
+    <div class="tri">
+      <svg viewBox="0 0 500 330" role="img" aria-label="Trilemma triangle: no new trusted parties, arbitrary senders today, covers history — only two edges are achievable">
+        <line class="edge" x1="250" y1="50" x2="90" y2="270"/>
+        <line class="edge dead" x1="250" y1="50" x2="410" y2="270"/>
+        <line class="edge" x1="90" y1="270" x2="410" y2="270"/>
+        <text x="250" y="34" text-anchor="middle">① no new trusted parties</text>
+        <text x="95" y="296" text-anchor="middle">③ covers history</text>
+        <text x="388" y="296" text-anchor="middle">② arbitrary senders, today</text>
+        <text class="elab" x="140" y="150" text-anchor="end">①+③ DNSSEC</text>
+        <text class="elab dead" x="348" y="146" text-anchor="start">①+② ∅</text>
+        <text class="elab dead" x="348" y="162" text-anchor="start">doesn’t exist</text>
+        <text class="elab" x="250" y="260" text-anchor="middle">②+③ observation quorums / archives</text>
+      </svg>
+      <div>
+        <ul class="tight">
+          <li><strong>DNSSEC</strong> → ① + ③ going forward, but only for the few senders that sign their zones.</li>
+          <li><strong>Observation quorums</strong> → ② + ③ going forward, with the trusted parties minimized, diversified, and bonded.</li>
+          <li><strong>Archives</strong> (zk.email today) → ② + ③, but with full standing trust in one database.</li>
+          <li><strong>① + ②</strong> — zero trusted parties for arbitrary unsigned senders — <strong>does not exist</strong>. Anyone selling it is hiding an oracle.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 6 · CENSUS -->
+<section class="slide" aria-label="DNSSEC census">
+  <div class="wrap">
+    <div class="kicker">measured · dig +short DS · 2026-08-20</div>
+    <h2>DNSSEC census: who actually signs?</h2>
+
+    <div class="group"><span class="glabel">Publishers &amp; big tech</span>
+      <div class="chipgrid">
+        <span class="chip bad" data-tip="<b>nytimes.com</b> — no DS record. Dual-provider DNS (NS1 + Route53) makes signing operationally unlikely."><span class="ic">✕</span>nytimes.com</span>
+        <span class="chip bad" data-tip="<b>google.com</b> — no DS record."><span class="ic">✕</span>google.com</span>
+        <span class="chip bad" data-tip="<b>gmail.com</b> — no DS record."><span class="ic">✕</span>gmail.com</span>
+        <span class="chip bad" data-tip="<b>microsoft.com</b> — no DS record."><span class="ic">✕</span>microsoft.com</span>
+        <span class="chip bad" data-tip="<b>yahoo.com</b> — no DS record."><span class="ic">✕</span>yahoo.com</span>
+      </div>
+    </div>
+
+    <div class="group"><span class="glabel">Mailbox providers</span>
+      <div class="chipgrid">
+        <span class="chip part" data-tip="<b>outlook.com</b> — DS 43591 13 2 ✓, but the DKIM selector CNAMEs into an UNSIGNED zone. Chain breaks at the last hop."><span class="ic">◐</span>outlook.com</span>
+        <span class="chip ok" data-tip="<b>proton.me</b> — DS 12382 8 2. Signed CNAME into domains.proton.ch, also signed. Chain complete."><span class="ic">✓</span>proton.me</span>
+        <span class="chip ok" data-tip="<b>protonmail.com</b> — DS 44693 13 2."><span class="ic">✓</span>protonmail.com</span>
+        <span class="chip bad" data-tip="<b>fastmail.com</b> — no DS record."><span class="ic">✕</span>fastmail.com</span>
+      </div>
+    </div>
+
+    <div class="group"><span class="glabel">ESP zones — 0 of 5 signed</span>
+      <div class="chipgrid">
+        <span class="chip bad" data-tip="<b>sparkpostmail.com</b> (SparkPost — NYT’s newsletter ESP) — no DS record."><span class="ic">✕</span>sparkpostmail.com</span>
+        <span class="chip bad" data-tip="<b>sendgrid.net</b> — no DS record."><span class="ic">✕</span>sendgrid.net</span>
+        <span class="chip bad" data-tip="<b>mailgun.org</b> — no DS record."><span class="ic">✕</span>mailgun.org</span>
+        <span class="chip bad" data-tip="<b>amazonses.com</b> — no DS record."><span class="ic">✕</span>amazonses.com</span>
+        <span class="chip bad" data-tip="<b>mcsv.net</b> (Mailchimp) — no DS record."><span class="ic">✕</span>mcsv.net</span>
+      </div>
+    </div>
+
+    <div class="group"><span class="glabel">Government (.gov — DNSSEC mandated, OMB M-08-23) &amp; banks (.bank — fTLD requires it)</span>
+      <div class="chipgrid">
+        <span class="chip ok" data-tip="<b>irs.gov</b> — DS 10226 8 2. Selector TXT directly RRSIG-signed, algorithm 8."><span class="ic">✓</span>irs.gov</span>
+        <span class="chip ok" data-tip="<b>ssa.gov</b> — DS 9271 13 2."><span class="ic">✓</span>ssa.gov</span>
+        <span class="chip ok" data-tip="<b>uscis.gov</b> — DS 2371 13 2."><span class="ic">✓</span>uscis.gov</span>
+        <span class="chip ok" data-tip="<b>lead.bank</b> — DS 6806 13 2."><span class="ic">✓</span>lead.bank</span>
+        <span class="chip ok" data-tip="<b>column.bank</b> — DS 59552 13 2."><span class="ic">✓</span>column.bank</span>
+      </div>
+    </div>
+
+    <div class="legendrow">
+      <span><b style="color:var(--good)">✓</b> signed (DS present)</span>
+      <span><b style="color:var(--serious)">◐</b> partial (chain breaks)</span>
+      <span><b style="color:var(--critical)">✕</b> unsigned (no DS)</span>
+      <span style="color:var(--muted)">hover a chip for the evidence</span>
+    </div>
+  </div>
+</section>
+
+<!-- 7 · CHAINS -->
+<section class="slide" aria-label="Chain checks">
+  <div class="wrap">
+    <div class="kicker">measured · dig +dnssec TXT &lt;selector&gt;._domainkey.&lt;domain&gt;</div>
+    <h2>Where each chain actually ends</h2>
+    <div class="card">
+      <div class="chainrow">
+        <div class="chain">
+          <span class="node ok"><span class="ic">✓</span>. root</span><span class="link"></span>
+          <span class="node ok"><span class="ic">✓</span>.gov</span><span class="link"></span>
+          <span class="node ok"><span class="ic">✓</span>irs.gov</span><span class="link"></span>
+          <span class="node ok"><span class="ic">✓</span>irs-20171230 TXT + RRSIG (alg 8)</span>
+        </div>
+        <div class="verdict"><b>Fully provable onchain today</b> — algorithm 8 is exactly what the ENS DNSSEC oracle verifies. Selector live since 2017.</div>
+      </div>
+      <div class="chainrow">
+        <div class="chain">
+          <span class="node ok"><span class="ic">✓</span>. root</span><span class="link"></span>
+          <span class="node ok"><span class="ic">✓</span>proton.me</span><span class="link"></span>
+          <span class="node ok"><span class="ic">✓</span>CNAME (signed)</span><span class="link"></span>
+          <span class="node ok"><span class="ic">✓</span>domains.proton.ch TXT + RRSIG</span>
+        </div>
+        <div class="verdict"><b>Chain complete</b> via signed CNAME into a signed target zone.</div>
+      </div>
+      <div class="chainrow">
+        <div class="chain">
+          <span class="node ok"><span class="ic">✓</span>. root</span><span class="link"></span>
+          <span class="node ok"><span class="ic">✓</span>outlook.com</span><span class="link"></span>
+          <span class="node ok"><span class="ic">✓</span>CNAME (signed)</span><span class="link broken"></span>
+          <span class="node bad"><span class="ic">✕</span>outbound.protection.outlook.com TXT — no RRSIG</span>
+        </div>
+        <div class="verdict"><b>Breaks at the last hop.</b> You can trustlessly prove where outlook.com <em>points</em> — not what lives there. (Still shrinks the observation problem to one Microsoft zone.)</div>
+      </div>
+      <div class="chainrow">
+        <div class="chain">
+          <span class="node ok"><span class="ic">✓</span>. root</span><span class="link broken"></span>
+          <span class="node bad"><span class="ic">✕</span>nytimes.com — no DS</span><span class="link broken"></span>
+          <span class="node bad"><span class="ic">✕</span>scph20250409 plain TXT, unsigned</span>
+        </div>
+        <div class="verdict"><b>No chain at all.</b> Plain TXT, no CNAME to inherit from, dual-provider DNS (NS1 + Route53) — don’t expect them to sign. NYT is pinned to observation-based tiers.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 8 · NYT KEY SPRAWL -->
+<section class="slide" aria-label="NYT key sprawl timeline">
+  <div class="wrap">
+    <div class="kicker">measured · archive.prove.email api + live dig</div>
+    <h2>nytimes.com runs ≥3 key infrastructures at once</h2>
+
+    <div class="card">
+      <div class="tl" id="tl">
+        <span class="vline" style="left:0%"></span><span class="vline" style="left:18.75%"></span>
+        <span class="vline" style="left:37.5%"></span><span class="vline" style="left:56.25%"></span>
+        <span class="vline" style="left:75%"></span><span class="vline" style="left:93.75%"></span>
+        <span class="nowline" style="left:98.8%"></span><span class="nowlab" style="left:98.8%">today</span>
+        <span class="annot" style="left:40%; top:-22px">↓ 8-day rotation overlap (Apr 9–17 ’25)</span>
+
+        <div class="lane"><span class="lab">scph0118</span><div class="track">
+          <span class="bar" style="left:5.1%; width:43.6%; background:var(--s1)" data-tip="<b>scph0118</b> · SparkPost<br>observed 2024-02-19 → 2025-04-17<br>(deleted from DNS after rotation)"></span></div></div>
+        <div class="lane"><span class="lab">scph20250409</span><div class="track">
+          <span class="bar live" style="left:47.8%; width:51%; background:var(--s1)" data-tip="<b>scph20250409</b> · SparkPost (current)<br>selector date-stamp 2025-04-09 → verified live today via dig<br>RSA-4096"></span></div></div>
+        <div class="lane"><span class="lab">google</span><div class="track">
+          <span class="bar" style="left:10.3%; width:82.1%; background:var(--s2)" data-tip="<b>google</b> · Google Workspace (corporate mail)<br>observed 2024-04-09 → 2026-06-17 (still live at last crawl)"></span></div></div>
+        <div class="lane"><span class="lab">k1</span><div class="track">
+          <span class="bar" style="left:10.3%; width:37.6%; background:var(--s3)" data-tip="<b>k1</b> · Sailthru-era<br>observed 2024-04-09 → 2025-04-10"></span></div></div>
+        <div class="lane"><span class="lab">k2</span><div class="track">
+          <span class="bar" style="left:10.3%; width:82.1%; background:var(--s3)" data-tip="<b>k2</b> · Sailthru-era — stale but STILL LIVE<br>observed 2024-04-09 → 2026-06-17"></span></div></div>
+        <div class="lane"><span class="lab">200608</span><div class="track">
+          <span class="bar" style="left:10.3%; width:37.5%; background:var(--muted)" data-tip="<b>200608</b> · infrastructure unknown<br>observed 2024-04-09 → 2025-04-09<br>(selector name suggests it long predates the crawler)"></span></div></div>
+
+        <div class="axis"><span></span><div class="ticks">
+          <span class="tick" style="left:0%">Jan ’24</span><span class="tick" style="left:18.75%">Jul ’24</span>
+          <span class="tick" style="left:37.5%">Jan ’25</span><span class="tick" style="left:56.25%">Jul ’25</span>
+          <span class="tick" style="left:75%">Jan ’26</span><span class="tick" style="left:93.75%">Jul ’26</span>
+        </div></div>
+      </div>
+
+      <div class="legendrow">
+        <span><i style="width:10px;height:10px;border-radius:3px;background:var(--s1);display:inline-block"></i> SparkPost (newsletters)</span>
+        <span><i style="width:10px;height:10px;border-radius:3px;background:var(--s2);display:inline-block"></i> Google Workspace</span>
+        <span><i style="width:10px;height:10px;border-radius:3px;background:var(--s3);display:inline-block"></i> Sailthru-era</span>
+        <span><i style="width:10px;height:10px;border-radius:3px;background:var(--muted);display:inline-block"></i> unknown</span>
+      </div>
+
+      <details class="tbl"><summary>table view — observed validity windows</summary>
+        <table><tr><th>selector</th><th>infrastructure</th><th>first seen</th><th>last seen</th><th>status</th></tr>
+          <tr><td>scph0118</td><td>SparkPost</td><td>2024-02-19</td><td>2025-04-17</td><td>rotated out</td></tr>
+          <tr><td>scph20250409</td><td>SparkPost</td><td>2025-04-09*</td><td>—</td><td>live (dig, today)</td></tr>
+          <tr><td>google</td><td>Google Workspace</td><td>2024-04-09</td><td>2026-06-17</td><td>live at last crawl</td></tr>
+          <tr><td>k1</td><td>Sailthru-era</td><td>2024-04-09</td><td>2025-04-10</td><td>gone</td></tr>
+          <tr><td>k2</td><td>Sailthru-era</td><td>2024-04-09</td><td>2026-06-17</td><td>live at last crawl</td></tr>
+          <tr><td>200608</td><td>unknown</td><td>2024-04-09</td><td>2025-04-09</td><td>gone</td></tr>
+        </table>
+        <p style="font-size:.78em; color:var(--muted); margin-top:6px">*selector date-stamp. “First seen” elsewhere = when the crawler started, not when the key was born — the witnessed-log point in miniature.</p>
+      </details>
+    </div>
+
+    <div class="cards2" style="margin-top:16px">
+      <div class="card"><p><strong>Consequence:</strong> a domain-scoped registry trusts the <em>union</em> of all these infrastructures — including stale ones like <code>k2</code>. Market rules need <strong>selector-family scoping</strong> (e.g. <code>scph*</code> = the newsroom’s ESP).</p></div>
+      <div class="card"><p><strong>Also measured:</strong> NYT/Reuters/WaPo mail is single-signed — no ESP dual-signature to bootstrap from. But SparkPost signatures carry <code>t=</code> timestamps → <strong>in-circuit time binding is viable</strong>.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 9 · TIER LADDER -->
+<section class="slide" aria-label="Tier ladder">
+  <div class="wrap">
+    <div class="kicker">the design space</div>
+    <h2>Six tiers, ranked by trust eliminated</h2>
+    <div class="card">
+      <div class="tier"><span class="tchip" style="background:var(--t0); color:#0b0b0b">T0</span>
+        <div><div class="tname">DNSSEC — the only true proof</div><div class="tdesc">Zone owner signs the key record, chained to the ICANN root.</div></div>
+        <span class="troot">authority-rooted</span></div>
+      <div class="tier"><span class="tchip" style="background:var(--t1); color:#0b0b0b">T1</span>
+        <div><div class="tname">Notarized multi-vantage DNS quorum</div><div class="tdesc">zkTLS over DoH × resolvers × notaries × vantages × days. The workhorse for NYT.</div></div>
+        <span class="troot">observation-rooted</span></div>
+      <div class="tier"><span class="tchip" style="background:var(--t2); color:#0b0b0b">T2</span>
+        <div><div class="tname">Witnessed history log</div><div class="tdesc">Merkle log + daily onchain roots + cross-checking crawlers. Makes trust ephemeral.</div></div>
+        <span class="troot">time-rooted</span></div>
+      <div class="tier"><span class="tchip" style="background:var(--t3); color:#fff">T3</span>
+        <div><div class="tname">ARC verifier-concentration</div><div class="tdesc">Gmail’s seal collapses thousands of sender keys into one ultra-watched key.</div></div>
+        <span class="troot">verifier-rooted</span></div>
+      <div class="tier"><span class="tchip" style="background:var(--t4); color:#fff">T4</span>
+        <div><div class="tname">Policy hardening</div><div class="tdesc">Key aging, snapshot-at-open, selector scoping, in-circuit t= window binding.</div></div>
+        <span class="troot">policy</span></div>
+      <div class="tier"><span class="tchip" style="background:var(--t5); color:#fff">T5</span>
+        <div><div class="tname">Evidence-carrying optimistic registration</div><div class="tdesc">Cheap happy path; challenge forces verification of pre-committed evidence; loser slashed.</div></div>
+        <span class="troot">accountability</span></div>
+    </div>
+    <p style="margin-top:14px; font-size:.9em; color:var(--muted)">These compose — a real registry stacks T1+T2+T4+T5 for unsigned senders and drops to T0 wherever DNSSEC exists.</p>
+  </div>
+</section>
+
+<!-- 10 · T0 + T1 -->
+<section class="slide" aria-label="Tier 0 and Tier 1">
+  <div class="wrap">
+    <div class="kicker">tiers in depth · 1 of 3</div>
+    <h2><span class="accent">T0</span> authority &nbsp;·&nbsp; <span class="accent">T1</span> observation</h2>
+    <div class="cards2">
+      <div class="card">
+        <span class="tag" style="color:var(--t0)">T0 · DNSSEC</span>
+        <ul class="tight">
+          <li>Verifiable onchain today via the <strong>ENS DNSSEC oracle</strong> pattern (~10⁶ gas, paid once per rotation) or zk-wrapped for cheaper settlement.</li>
+          <li>Available <strong>now</strong> for .gov, .bank, Proton — a genuinely trustless end-to-end exists, just not for NYT.</li>
+          <li>Leverage point: one ESP signing its zone flips every CNAME’d customer to T0 at once.</li>
+        </ul>
+      </div>
+      <div class="card" style="border-color:rgba(57,135,229,.45)">
+        <span class="tag" style="color:var(--t2)">T1 · notarized DNS quorum — the workhorse</span>
+        <ul class="tight">
+          <li><strong>zkTLS over DoH:</strong> prove a TLS session with a cert-holding resolver (Cloudflare / Google / Quad9) returned TXT=K at time t.</li>
+          <li>Trust decomposes: resolver honesty × notary non-collusion × WebPKI (itself CT-logged) — multiplied across resolvers, notaries, vantages, and days.</li>
+          <li><strong>Opacity’s MPC-TLS AVS is exactly this primitive</strong> — with EigenLayer slashing rails already built. Onchain cost = operator signature checks, far cheaper than DNSSEC chain verification.</li>
+          <li>Upgrades zk.email’s single unauditable updater key into a <strong>diverse, bonded, cross-checking observer set</strong>.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 11 · T2 + T3 -->
+<section class="slide" aria-label="Tier 2 and Tier 3">
+  <div class="wrap">
+    <div class="kicker">tiers in depth · 2 of 3</div>
+    <h2><span class="accent">T2</span> witnessed history &nbsp;·&nbsp; <span class="accent">T3</span> ARC concentration</h2>
+    <div class="cards2">
+      <div class="card">
+        <span class="tag" style="color:var(--t2)">T2 · the log that makes trust ephemeral</span>
+        <ul class="tight">
+          <li>Every observation (domain, selector, keyHash, resolver, vantage, t) appends to a <strong>Merkle log; root posted onchain daily</strong> — one storage write.</li>
+          <li>Independent crawlers cross-check (ours vs zk.email’s); <strong>divergence is an alarm</strong>.</li>
+          <li>Yields non-equivocation, permanence (upstream deletion no longer destroys provability), and immunity of committed history to later compromise.</li>
+          <li>Converts the archive from “trust our database” to a <strong>tamper-evident public record</strong> — for the cost of a cron job.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <span class="tag" style="color:var(--t3)">T3 · one giant key instead of thousands</span>
+        <ul class="tight">
+          <li>Gmail seals inbound mail (<code>d=google.com</code>, <code>s=arc-20160816</code> — live, unchanged since 2016): a signature over <strong>the content AND Google’s own dkim=pass verdict</strong> rendered against DNS at receipt.</li>
+          <li>Collapses per-sender provenance into provenance of <strong>one ultra-watched, slow-moving key</strong>.</li>
+          <li>Different trust <em>shape</em>, not strictly less: full trust in Google’s verdict, and google.com is itself unsigned — the root is still T1, but of a single key.</li>
+          <li>Best role: <strong>redundant second path</strong> that high-value settlements must agree with.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 12 · T4 + T5 -->
+<section class="slide" aria-label="Tier 4 and Tier 5">
+  <div class="wrap">
+    <div class="kicker">tiers in depth · 3 of 3</div>
+    <h2><span class="accent">T4</span> policy &nbsp;·&nbsp; <span class="accent">T5</span> accountability</h2>
+    <div class="cards2">
+      <div class="card">
+        <span class="tag" style="color:var(--t4)">T4 · “DNS-true but malicious”</span>
+        <p style="margin-bottom:8px">Perfect DNS fidelity doesn’t stop dangling-CNAME selector takeovers, brief insertions during a zone compromise, or stale parallel keys (NYT’s <code>k2</code>).</p>
+        <ul class="tight">
+          <li><strong>Key aging</strong> — settlement-eligible only after N days of continuous quorum observation.</li>
+          <li><strong>Snapshot-at-market-open</strong> — pin the observed key set; mid-market keys enter via the aged path.</li>
+          <li><strong>In-circuit <code>t=</code> ∈ observed window</strong> — small extension to the compiled E1 circuit.</li>
+          <li>“Old key signs new key” is impossible — aging + window-binding + witnessed history is the honest synthetic substitute.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <span class="tag" style="color:var(--t5)">T5 · evidence-carrying optimistic registration</span>
+        <ul class="tight">
+          <li>Register with <code>(keyHash, evidenceHash, bond)</code> — verify <strong>nothing</strong> onchain on the happy path.</li>
+          <li>A challenge forces full verification of the <strong>pre-committed</strong> T1 evidence (or a DNSSEC counter-proof); the loser is slashed.</li>
+          <li>Optimistic about <strong>verification cost</strong>, never about <strong>evidence collection</strong> — DNS at challenge time may have legitimately moved on.</li>
+          <li>The dispute ladder must bottom out at T0/T1; watchers are natural — anyone holding the other side of the market.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 13 · BUILD PLAN -->
+<section class="slide" aria-label="Build plan">
+  <div class="wrap">
+    <div class="kicker">what to build · maps onto the backlog</div>
+    <h2>The composite for this repo</h2>
+    <div class="card">
+      <div class="step"><span class="n">1</span><div>
+        <h3>WitnessedDKIMRegistry <span class="bt">A2</span></h3>
+        <p>Entries: (domain, selectorPattern, keyHash, trustTier, observedWindow, evidenceHash, bond, activatesAt). Markets declare a <strong>minTier</strong> at creation — oracle trust becomes a priced, per-market parameter instead of a hidden constant.</p></div></div>
+      <div class="step"><span class="n">2</span><div>
+        <h3>Start the observer daemon — now</h3>
+        <p>Cron-resolve watched selectors via 3 DoH resolvers → Merkle log → daily onchain root → cross-check the zk.email archive → alarm on divergence. Every day it isn’t running is history lost.</p></div></div>
+      <div class="step"><span class="n">3</span><div>
+        <h3>Opacity-notarized DoH attestations as the T1 evidence format</h3>
+        <p>The MPC-TLS rails and EigenLayer slashing already exist in-house. Arguably a flagship use case: DKIM provenance as an MPC-TLS product.</p></div></div>
+      <div class="step"><span class="n">4</span><div>
+        <h3>T0 demo market on a DNSSEC sender (irs.gov / ssa.gov)</h3>
+        <p>Proves the fully-trustless end-to-end exists today, and frames the ask correctly: “sign your zone and markets on your word are trustless.”</p></div></div>
+      <div class="step"><span class="n">5</span><div>
+        <h3>ARC as the redundant verifier for high-value settlement</h3>
+        <p>Two independent trust shapes must agree before big money moves.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 14 · CLOSER -->
+<section class="slide" aria-label="Closer">
+  <div class="wrap">
+    <div class="kicker">the honest one-liner</div>
+    <p class="sub" style="margin-bottom:30px">Key provenance can’t be trustless in the absolute — DNS has no
+    canonical state, and NYT doesn’t sign its zone. What we can do: shrink the trusted step to
+    <strong>“k independent, bonded observers agreed on what DNS served, at one instant,”</strong>
+    commit that instant immutably, and let everything afterward be mathematics.</p>
+    <div style="display:flex; flex-direction:column; gap:14px">
+      <div class="bigword bw0">Ephemeral. <small>trusted only at the instant of observation</small></div>
+      <div class="bigword bw1">Diverse. <small>resolvers × notaries × vantages — not one updater key</small></div>
+      <div class="bigword bw2">Slashable. <small>bonded evidence, challengeable, punishable</small></div>
+    </div>
+    <p style="margin-top:26px; color:var(--muted)">…instead of standing, singular, and silent.</p>
+    <div class="foot">docs/DKIM-PROVENANCE.md · measured 2026-08-20 · zkEmail prediction markets</div>
+  </div>
+</section>
+
+<div class="hud">
+  <button id="prev" aria-label="Previous slide">‹</button>
+  <span id="counter">1 / 14</span>
+  <button id="next" aria-label="Next slide">›</button>
+</div>
+<div class="hint">← → to navigate</div>
+<div id="tip" role="tooltip"></div>
+
+<script>
+(function(){
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var N = slides.length, cur = 0;
+  var counter = document.getElementById('counter');
+  var pbar = document.getElementById('pbar');
+  var tip = document.getElementById('tip');
+
+  function show(i){
+    i = Math.max(0, Math.min(N-1, i));
+    slides[cur].classList.remove('active');
+    cur = i;
+    slides[cur].classList.add('active');
+    counter.textContent = (cur+1) + ' / ' + N;
+    pbar.style.width = ((cur+1)/N*100) + '%';
+    if (history.replaceState) history.replaceState(null, '', '#' + (cur+1));
+    hideTip();
+  }
+
+  var fromHash = parseInt((location.hash||'').replace('#',''), 10);
+  slides[0].classList.add('active');
+  show(isNaN(fromHash) ? 0 : fromHash - 1);
+
+  document.getElementById('next').addEventListener('click', function(){ show(cur+1); });
+  document.getElementById('prev').addEventListener('click', function(){ show(cur-1); });
+
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); show(cur+1); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); show(cur-1); }
+    else if (e.key === 'Home') { e.preventDefault(); show(0); }
+    else if (e.key === 'End') { e.preventDefault(); show(N-1); }
+  });
+
+  window.addEventListener('hashchange', function(){
+    var h = parseInt((location.hash||'').replace('#',''), 10);
+    if (!isNaN(h)) show(h-1);
+  });
+
+  var tx = null;
+  document.addEventListener('touchstart', function(e){ tx = e.changedTouches[0].clientX; }, {passive:true});
+  document.addEventListener('touchend', function(e){
+    if (tx === null) return;
+    var dx = e.changedTouches[0].clientX - tx; tx = null;
+    if (dx < -40) show(cur+1); else if (dx > 40) show(cur-1);
+  }, {passive:true});
+
+  /* tooltip layer for [data-tip] */
+  function hideTip(){ if (tip) tip.style.display = 'none'; }
+  function moveTip(e){
+    var pad = 14, x = e.clientX + pad, y = e.clientY + pad;
+    var r = tip.getBoundingClientRect();
+    if (x + r.width > window.innerWidth - 8) x = e.clientX - r.width - pad;
+    if (y + r.height > window.innerHeight - 8) y = e.clientY - r.height - pad;
+    tip.style.left = x + 'px'; tip.style.top = y + 'px';
+  }
+  document.addEventListener('mouseover', function(e){
+    var t = e.target.closest ? e.target.closest('[data-tip]') : null;
+    if (t) { tip.innerHTML = t.getAttribute('data-tip'); tip.style.display = 'block'; moveTip(e); }
+  });
+  document.addEventListener('mousemove', function(e){
+    if (tip.style.display === 'block') {
+      var t = e.target.closest ? e.target.closest('[data-tip]') : null;
+      if (t) moveTip(e); else hideTip();
+    }
+  });
+  document.addEventListener('mouseout', function(e){
+    var t = e.target.closest ? e.target.closest('[data-tip]') : null;
+    if (t && !(e.relatedTarget && t.contains(e.relatedTarget))) hideTip();
+  });
+})();
+</script>
+</body>
+</html>

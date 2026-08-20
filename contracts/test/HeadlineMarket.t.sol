@@ -5,7 +5,7 @@ import {MarketTestBase} from "./MarketTestBase.sol";
 import {HeadlineMarket} from "../src/market/HeadlineMarket.sol";
 import {MarketFactory} from "../src/market/MarketFactory.sol";
 import {FPMM} from "../src/market/FPMM.sol";
-import {CompiledEmailProof, EmailProof} from "../src/zkemail/IZKEmail.sol";
+import {EmailProof} from "../src/zkemail/IZKEmail.sol";
 
 contract HeadlineMarketTest is MarketTestBase {
     HeadlineMarket market;
@@ -18,14 +18,14 @@ contract HeadlineMarketTest is MarketTestBase {
         (market, fpmm) = createDefaultMarket();
     }
 
-    function nytProof(bytes32 nullifier) internal view returns (EmailProof memory) {
+    function nytProof(bytes32 nullifier) internal returns (EmailProof memory) {
         return makeProof(
             "nytimes.com", block.timestamp + 1 days, "nytdirect@nytimes.com", FED_SUBJECT, "The Federal Reserve...",
             nullifier
         );
     }
 
-    function wapoProof(bytes32 nullifier) internal view returns (EmailProof memory) {
+    function wapoProof(bytes32 nullifier) internal returns (EmailProof memory) {
         return makeProof(
             "email.washingtonpost.com",
             block.timestamp + 1 days,
@@ -310,8 +310,10 @@ contract HeadlineMarketTest is MarketTestBase {
         assertFalse(ok);
         assertEq(reason, "wrong DKIM domain");
 
+        // Tampering a field bound to the RSA-signed header breaks verification: change
+        // the subject after signing and the header no longer contains it.
         EmailProof memory tampered = nytProof("n1");
-        tampered.timestamp += 1;
+        tampered.subject = "Breaking News: Fed HIKES rates";
         (ok, reason) = market.checkProof(0, tampered);
         assertFalse(ok);
         assertEq(reason, "invalid zkemail proof");

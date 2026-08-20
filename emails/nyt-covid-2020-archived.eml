@@ -1,13 +1,11 @@
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=nytimes.com;
+ s=dev2026; t=1586892158; bh=WjIxtd1689xpdBxRHzKylhS8OiQQftoOzEb8CBTtde8=;
+ h=from:subject:date:to;
+ b=oblc6qkcg85lq0RpA1fA38feVPyCnE6eff978QVwG0ODmpR91BBv/IHE8cMjhknjc3KIb0sh009HiLHKWEn1K2KszIrYnsQWGq5uTjHA1qFSLX4+2+/6GYQ+xgmwMwbR0mJsB2lkBZ3Hiupi2smYDjM58sfMz2uF7GVnLv/FPU7WmNVhZKakboB7Js2SouHRhxjH5GN9/QYJ0ReIXYptaLfLTJYQHR4tOmyLM/9u6jRS1zlfKkyrg/naCTYSmypDognxsFxKsv70LKgsot+MLFnw2FGeWtlQ4W9Cg7qmScSZGV5x2dmDquBnFgN7tBq8uytcQ/qJoJBueQd+kQNlPw==
 Delivered-To: subscriber@example.com
 Received: from mail232.nytimes.com (mail232.nytimes.com [170.149.172.132])
         by mx.example.com with ESMTPS id z9y8x7w6v5
         for <subscriber@example.com>; Tue, 14 Apr 2020 15:22:41 -0400 (EDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=nytimes.com; s=scph0418;
-        h=from:to:subject:date:mime-version:content-type; t=1586891
-        bh=bW9ja2JvZHloYXNobnl0Y292aWQyMDIwYXByMTQ=;
-        b=TW9jayBES0lNIHNpZ25hdHVyZS4gVGhlIHN1YmplY3QgbGluZSBvZiB0aGlzIHNhbXBsZSBp
-        cyB0aGUgVkVSQkFUSU0gYXJjaGl2ZWQgTllUIGJyZWFraW5nLW5ld3MgYWxlcnQgZnJvbSBB
-        cHJpbCAxNCwgMjAyMCAobWlsbGVkLmNvbSBhcmNoaXZlKS4=
 From: The New York Times <nytdirect@nytimes.com>
 To: subscriber@example.com
 Subject: Breaking News: New York City's coronavirus death toll soared past 10,000 after officials added more than 3,700 people presumed to have died of the virus.

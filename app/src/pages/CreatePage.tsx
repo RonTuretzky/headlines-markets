@@ -5,9 +5,8 @@ import { CheckCircle, Plus, Trash, WarningCircle } from "@phosphor-icons/react";
 import { maxUint256 } from "viem";
 import { abis } from "../contracts/gen";
 import { NEWSPAPERS } from "../data/newspapers";
-import { ContentField, DKIM, FACTORY, USDC, useCash } from "../hooks/useMarkets";
+import { ContentField, FACTORY, USDC, useCash } from "../hooks/useMarkets";
 import { parseAmount } from "../lib/format";
-import { mockKeyHash } from "../lib/prover";
 import { publicClient, useWallet } from "../lib/wallet";
 import { explain } from "../components/TradeWidget";
 
@@ -104,26 +103,6 @@ export function CreatePage() {
         }
       }
 
-      // Register mock DKIM keys for any domain not yet known (permissionless).
-      for (const s of sources) {
-        const known = (await publicClient.readContract({
-          address: DKIM,
-          abi: abis.MockDKIMRegistry,
-          functionName: "isDKIMPublicKeyHashValid",
-          args: [s.dkimDomain, mockKeyHash(s.dkimDomain)],
-        })) as boolean;
-        if (!known) {
-          await wallet.write({
-            address: DKIM,
-            abi: abis.MockDKIMRegistry,
-            functionName: "registerMockKey",
-            args: [s.dkimDomain],
-          });
-        }
-      }
-
-      // Chain time, not wall clock — the constructor validates deadline > block.timestamp,
-      // and a demo chain (anvil, possibly time-warped) can be ahead of the browser.
       const now = Number((await publicClient.getBlock()).timestamp);
       // distributionHint sets the opening odds: pool keeps more of the cheap side.
       // YES price = noBal / (yesBal + noBal), so hint = [100 - startYes, startYes].
@@ -137,7 +116,8 @@ export function CreatePage() {
           `Resolves YES if at least ${threshold} of ${sources.length} configured newspapers send a` +
             ` breaking-news alert email matching /${contentRegex}/ on the` +
             ` ${contentField === ContentField.Subject ? "subject" : contentField === ContentField.Body ? "body" : "subject or body"},` +
-            ` dated before the deadline. Settled permissionlessly by zkEmail proofs; resolves NO` +
+            ` dated before the deadline. Settled permissionlessly by a real DKIM signature verified onchain;` +
+            ` resolves NO` +
             ` ${bufferHours}h after the deadline if the threshold is not met.`,
         contentRegex,
         contentField,

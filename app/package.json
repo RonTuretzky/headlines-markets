@@ -8,18 +8,18 @@
     "build": "npm run sync && tsc -b && vite build",
     "preview": "vite preview",
     "sync": "node scripts/sync-contracts.mjs",
-    "prove": "node scripts/prove-email.mjs",
     "e2e": "playwright test",
     "e2e:ui": "playwright test --ui",
     "zk:build": "node scripts/zkregex/build-circuit.mjs",
-    "zk:register": "node scripts/zkregex/register-circuits.mjs",
-    "zk:verify": "node scripts/zkregex/verify-real-proof.mjs"
+    "dkim:sign-fixtures": "node scripts/sign-fixtures.mjs",
+    "dkim:keys": "node scripts/dkim-keys.mjs"
   },
   "dependencies": {
     "@breadcoop/ui": "^2.0.4",
     "@phosphor-icons/react": "^2.1.7",
     "@tanstack/react-query": "^5.62.0",
     "circomlib": "^2.0.5",
+    "mailauth": "^5.0.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.28.0",

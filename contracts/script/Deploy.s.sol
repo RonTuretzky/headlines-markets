@@ -5,14 +5,12 @@ import {Script} from "forge-std/Script.sol";
 import {ConditionalTokens} from "../src/tokens/ConditionalTokens.sol";
 import {TestUSDC} from "../src/tokens/TestUSDC.sol";
 import {IERC20} from "../src/tokens/ERC20.sol";
-import {MockDKIMRegistry} from "../src/zkemail/MockDKIMRegistry.sol";
-import {MockZKEmailVerifier} from "../src/zkemail/MockZKEmailVerifier.sol"; // kept for reference deployments
+import {DKIMRegistry} from "../src/zkemail/DKIMRegistry.sol";
+import {DKIMVerifier} from "../src/zkemail/DKIMVerifier.sol";
 import {HeadlineMarket} from "../src/market/HeadlineMarket.sol";
 import {MarketFactory} from "../src/market/MarketFactory.sol";
 import {FPMM} from "../src/market/FPMM.sol";
 import {Multicall3} from "../src/utils/Multicall3.sol";
-import {ZkRegexVerifierRegistry} from "../src/zkemail/ZkRegexVerifierRegistry.sol";
-import {ZkEmailVerifierV2} from "../src/zkemail/ZkEmailVerifierV2.sol";
 
 /// @notice Deploys the full stack to a local anvil chain, seeds demo markets and
 /// writes the addresses to deployments/local.json for the frontend.
@@ -31,20 +29,16 @@ contract Deploy is Script {
         Multicall3 multicall = new Multicall3();
         ConditionalTokens ct = new ConditionalTokens();
         TestUSDC usdc = new TestUSDC();
-        MockDKIMRegistry dkim = new MockDKIMRegistry();
-        ZkRegexVerifierRegistry circuitRegistry = new ZkRegexVerifierRegistry();
-        ZkEmailVerifierV2 verifier = new ZkEmailVerifierV2(dkim, circuitRegistry);
+        DKIMRegistry dkim = new DKIMRegistry();
+        DKIMVerifier verifier = new DKIMVerifier(dkim);
         MarketFactory factory =
             new MarketFactory(ct, verifier, address(new HeadlineMarket()), address(new FPMM()));
 
-        // Register mock DKIM keys for the newspapers used by the demo markets.
-        // (Also permissionless via registerMockKey for any new domain.)
-        dkim.registerMockKey("nytimes.com");
-        dkim.registerMockKey("email.washingtonpost.com");
-        dkim.registerMockKey("email.reuters.com");
-        dkim.registerMockKey("mail.cnn.com");
-        dkim.registerMockKey("mail.bloomberg.com");
-        dkim.registerMockKey("mail.theguardian.com");
+        // Register real DKIM public keys. The demo fixtures are signed by a committed
+        // dev key (keys/dev-dkim.pub) registered for the newspaper domains; the REAL
+        // NYT key is registered too so a real NYT email verifies against it. Keys are
+        // read from deployments/dkim-keys.json (written by app/scripts/dkim-keys.mjs).
+        registerKeysFromFile(dkim);
 
         // Fund the deployer and the standard anvil test accounts.
         usdc.mint(msg.sender, 1_000_000e6);
@@ -138,11 +132,24 @@ contract Deploy is Script {
         vm.serializeAddress(json, "usdc", address(usdc));
         vm.serializeAddress(json, "dkimRegistry", address(dkim));
         vm.serializeAddress(json, "verifier", address(verifier));
-        vm.serializeAddress(json, "circuitRegistry", address(circuitRegistry));
         vm.serializeAddress(json, "multicall3", address(multicall));
         vm.serializeUint(json, "chainId", block.chainid);
         string memory out = vm.serializeAddress(json, "factory", address(factory));
         vm.writeJson(out, "./deployments/local.json");
+    }
+
+    /// @dev Reads deployments/dkim-keys.json and registers each {domain, exp, modulus}.
+    function registerKeysFromFile(DKIMRegistry dkim) internal {
+        string memory json = vm.readFile("./deployments/dkim-keys.json");
+        uint256 n = vm.parseJsonUint(json, ".count");
+        for (uint256 i = 0; i < n; i++) {
+            string memory base = string.concat(".keys[", vm.toString(i), "]");
+            string memory domain = vm.parseJsonString(json, string.concat(base, ".domain"));
+            string memory selector = vm.parseJsonString(json, string.concat(base, ".selector"));
+            bytes memory exp = vm.parseJsonBytes(json, string.concat(base, ".exponent"));
+            bytes memory modulus = vm.parseJsonBytes(json, string.concat(base, ".modulus"));
+            dkim.registerKey(domain, selector, exp, modulus);
+        }
     }
 
     function threeWires() internal pure returns (HeadlineMarket.Source[] memory sources) {

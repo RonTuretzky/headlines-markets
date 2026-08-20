@@ -41,19 +41,11 @@ export default async function globalSetup() {
   }
   if (!(await rpcReady())) throw new Error("anvil (e2e, :8548) did not come up");
 
+  // real DKIM keys the deploy registers (dev key for fixtures + real NYT key)
+  execSync("node scripts/dkim-keys.mjs", { cwd: join(__dirname, ".."), stdio: "pipe" });
   execSync(
-    `forge script script/Deploy.s.sol --rpc-url ${RPC} --broadcast --disable-code-size-limit ` +
+    `forge script script/Deploy.s.sol --rpc-url ${RPC} --broadcast ` +
       "--private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
     { cwd: join(__dirname, "..", "..", "contracts"), stdio: "pipe" },
   );
-
-  // register any built zk-regex circuits (no-op if circuits/manifest.json is absent)
-  try {
-    execSync(`node scripts/zkregex/register-circuits.mjs --rpc ${RPC}`, {
-      cwd: join(__dirname, ".."),
-      stdio: "pipe",
-    });
-  } catch (e) {
-    console.warn("circuit registration skipped:", (e as Error).message?.slice(0, 200));
-  }
 }

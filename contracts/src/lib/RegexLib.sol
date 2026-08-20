@@ -4,12 +4,11 @@ pragma solidity ^0.8.28;
 /// @title RegexLib
 /// @notice A self-contained regular-expression engine written in Solidity.
 ///
-/// This is the "mock regex library" powering headline matching. It is *mock* in the
-/// sense that a production deployment would compile the pattern into a zk circuit
-/// (as zkEmail does) rather than interpret it onchain — but the engine itself is a
-/// real, working matcher, implemented as an NFA position-set simulation so that
-/// matching always terminates (no exponential backtracking) and is written assuming
-/// no gas constraints.
+/// The onchain regex engine powering headline matching: a real, working matcher over
+/// the DKIM-verified email Subject. Implemented as an NFA position-set simulation so
+/// matching always terminates (no exponential backtracking), written assuming no gas
+/// constraints. (A privacy-preserving deployment would instead compile the pattern
+/// into a zk circuit, as zkEmail's zk-regex does — see scripts/zkregex and backlog A3.)
 ///
 /// Supported syntax (a practical subset of JavaScript regex semantics):
 ///   - literal characters, `.` (any char except \n and \r)

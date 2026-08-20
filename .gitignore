@@ -22,3 +22,6 @@ circuits/build/
 app/public/circuits/
 contracts/src/generated/
 circuits/manifest.json
+
+# zk-regex research-track generated verifier (regenerate with pnpm zk:build)
+contracts/deployments/dkim-keys.json

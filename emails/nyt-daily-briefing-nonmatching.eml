@@ -1,13 +1,11 @@
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=nytimes.com;
+ s=dev2026; t=1786528937; bh=6NStS/bbYa0dzH//9E17BD3u+lSqCbqlHaQVbE+MEVA=;
+ h=from:subject:date:to;
+ b=T56V4xjGosbX0DNdtOrLm3vn9tsd9dB7Za4BjH1YYFn6T+QYNRbxDXDfxGT/zGhx/e+9QvrKwbCZ27YbUnFqavj3u/aYLWloKWdSPCAllLJdA/c6BJqmWdmcEqeY5Bn1XuqHqQiYCwRoB1EsY/Hcr8s0CrJG6V4a0sFJOq6Pbv/rnFQwghuuMw/hrbMBwpC3pwgRJ8Oux4aXHuOPzmn5Y0e8mWsHE3C/bPFjYab8l6+nonavnQ1uIy7e73hRl8I+1f2ZQQM7ddUgY6kUthAJqRl6M04Hi9Osdob/7qCx9vO0TbykGa3EkTqsbGgoFtrI1zu2JaV8YO+n1r0GyCWkzg==
 Delivered-To: subscriber@example.com
 Received: from mta-114-19.sparkpostmail.com (mta-114-19.sparkpostmail.com [192.174.94.19])
         by mx.example.com with ESMTPS id p5q6r7s8t9
         for <subscriber@example.com>; Wed, 12 Aug 2026 06:02:20 -0400 (EDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=nytimes.com; s=scph0818;
-        h=from:to:subject:date:mime-version:content-type; t=1786528937;
-        bh=bW9ja2JvZHloYXNobnl0bW9ybmluZzIwMjZhdWcxMg==;
-        b=TW9jayBES0lNIHNpZ25hdHVyZSBmb3IgYSBOWVQgbW9ybmluZyBicmllZmluZyBlbWFpbC4g
-        VXNlZnVsIGFzIGEgTkVHQVRJVkUgdGVzdDogdmFsaWQgc2VuZGVyLCB2YWxpZCBES0lNLCBi
-        dXQgdGhlIGNvbnRlbnQgZG9lcyBOT1QgbWF0Y2ggdGhlIG1hcmtldCByZWdleC4=
 From: The New York Times <nytdirect@nytimes.com>
 To: subscriber@example.com
 Subject: The Morning: Your Wednesday Briefing

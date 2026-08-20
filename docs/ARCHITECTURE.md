@@ -37,22 +37,34 @@ Two guarantees back it:
   `RegExp`** (~1,600 curated pairs + fuzzed inputs) and asserts byte-for-byte
   agreement with the Solidity engine inside the documented subset.
 
-### `zkemail/` — the proof layer
+### `zkemail/` — real DKIM verification
 
-`EmailProof` mirrors zkEmail's production struct (`email-tx-builder`'s
-`domainName / publicKeyHash / timestamp / emailNullifier / proof`), with the
-regex-extracted fields a headline circuit would expose as public outputs: `fromAddress`,
-`subject`, `bodyExcerpt` (bounded at 4KB, like the circuit's max body bytes).
+Settlement authenticity is genuine DKIM, verified onchain:
 
-- `MockDKIMRegistry` — domain → DKIM-key-hash validity, like zkEmail's DKIMRegistry.
-  Two write paths: owner-set arbitrary hashes (production shape) and permissionless
-  `registerMockKey(domain)` for the deterministic mock hash
-  `keccak("MOCK_DKIM_KEY:"+domain)`, which keeps the whole demo permissionless.
-- `MockZKEmailVerifier` — production shape (`registry check` → `proof check`), mock
-  math: accepts `proof == keccak256(abi.encode(PROOF_DOMAIN, ...publicFields))`. The
-  JS prover (`app/src/lib/prover.ts`, also the `prove-email.mjs` CLI) computes exactly
-  that from a raw `.eml`. Swapping in the real Groth16 verifier + real registry
-  upgrades the system to trustless settlement with **no other contract changes**.
+- `RSAVerify.sol` — RSASSA-PKCS1-v1_5 with SHA-256 via the **modexp precompile
+  (0x05)**: `s^e mod n` compared to the EMSA-PKCS1 encoding of the digest. Works for
+  any modulus length (NYT uses RSA-4096). The same check an inbound mail server runs.
+- `DKIMRegistry.sol` — real RSA public keys (modulus + exponent) per signing domain,
+  the actual DNS-published keys. Permissionless + write-once per modulus
+  (`publicKeyHash = keccak256(modulus)`); registering a key grants no power since
+  settling still needs a valid signature (the domain's private key).
+- `DKIMVerifier.sol` — the verifier markets call: look up the domain's key, RSA-verify
+  the signature over the email's canonicalized headers, and bind the extracted
+  From/Subject by requiring they appear in the authenticated header
+  (`emailNullifier == keccak256(signature)`).
+
+The prover (`app/src/lib/dkim.ts`, browser-safe) does relaxed/relaxed RFC 6376
+canonicalization — byte-verified against mailauth and against the real NYT email's
+signature — and packages `{header, signature}` into `EmailProof`. The onchain verifier
+does the real RSA check; no email content is trusted, only what the signature covers.
+Test fixtures are signed by a committed dev RSA key (`keys/`), registered in the
+registry — real signatures, real verification, a dev key standing in for a private key
+we can't hold. The real NYT DNS key is registered too, and a real NYT email verifies
+against it end to end.
+
+The **zk-regex research track** (`app/scripts/zkregex` + `ZkRegexVerifierRegistry`)
+compiles a pattern to a real Groth16 circuit toward private settlement (A1+A3); it is
+decoupled from this live path.
 
 ### `tokens/ConditionalTokens.sol` — the Polymarket settlement layer
 

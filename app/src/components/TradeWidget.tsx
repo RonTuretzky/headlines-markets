@@ -303,7 +303,7 @@ export function TradeWidget({ m }: { m: MarketData }) {
             : `${tab === "buy" ? "Buy" : "Sell"} ${side === 0 ? "Yes" : "No"}`}
       </Button>
       <p className="mt-2 text-center text-caption text-surface-grey-2">
-        By trading, you agree this is a local demo settled by mock zkEmail proofs.
+        By trading, you agree this is a local demo settled by real DKIM signatures verified onchain.
       </p>
     </div>
   );

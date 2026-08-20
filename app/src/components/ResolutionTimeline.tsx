@@ -29,7 +29,7 @@ export function ResolutionTimeline({ m }: { m: MarketData }) {
     steps.push({
       icon: <Envelope size={14} weight="bold" />,
       label: `Proof ${i + 1} of ${m.threshold} — ${m.sources[ev.sourceIndex]?.name ?? "?"}`,
-      detail: ev.compiled ? "private compiled proof" : `“${ev.subject}”`,
+      detail: `“${ev.subject}”`,
       state: "done",
     });
   });

@@ -34,7 +34,6 @@ export interface Evidence {
   emailTimestamp: bigint;
   nullifier: Hex;
   subject: string;
-  compiled?: boolean; // settled via the private compiled-circuit path (event-only)
 }
 
 export interface MarketData {
@@ -76,9 +75,7 @@ const buyEvent = parseAbiItem(
 const sellEvent = parseAbiItem(
   "event Sell(address indexed seller, uint256 returnAmount, uint256 feeAmount, uint256 outcomeIndex, uint256 tokensSold)",
 );
-const compiledProofEvent = parseAbiItem(
-  "event CompiledProofAccepted(uint256 indexed sourceIndex, address indexed submitter, bytes32 nullifier, uint256 emailTimestamp)",
-);
+
 
 async function fetchMarket(id: number, market: Address, fpmm: Address): Promise<MarketData> {
   const m = { address: market, abi: abis.HeadlineMarket } as const;
@@ -174,10 +171,9 @@ async function fetchMarket(id: number, market: Address, fpmm: Address): Promise<
     contracts: sources.map((_, i) => ({ ...m, functionName: "sourceMatched", args: [BigInt(i)] })),
   })) as unknown as boolean[];
 
-  const [buys, sells, compiledProofs, block] = await Promise.all([
+  const [buys, sells, block] = await Promise.all([
     publicClient.getLogs({ address: fpmm, event: buyEvent, fromBlock: 0n }),
     publicClient.getLogs({ address: fpmm, event: sellEvent, fromBlock: 0n }),
-    publicClient.getLogs({ address: market, event: compiledProofEvent, fromBlock: 0n }),
     publicClient.getBlock(),
   ]);
   const volume =
@@ -194,18 +190,7 @@ async function fetchMarket(id: number, market: Address, fpmm: Address): Promise<
     contentField: contentField as ContentField,
     sources: sources.map((s) => ({ ...s })),
     sourceMatched,
-    evidence: [
-      ...evidence.map((e) => ({ ...e, sourceIndex: Number(e.sourceIndex) })),
-      // compiled-path evidence lives in events only (no subject exists to store)
-      ...compiledProofs.map((l) => ({
-        sourceIndex: Number(l.args.sourceIndex ?? 0n),
-        submitter: l.args.submitter as Address,
-        emailTimestamp: l.args.emailTimestamp ?? 0n,
-        nullifier: (l.args.nullifier ?? "0x") as Hex,
-        subject: "",
-        compiled: true,
-      })),
-    ],
+    evidence: evidence.map((e) => ({ ...e, sourceIndex: Number(e.sourceIndex) })),
     threshold: Number(threshold),
     matchedCount: Number(matchedCount),
     resolution: resolution as Resolution,

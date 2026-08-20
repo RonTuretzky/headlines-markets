@@ -5,23 +5,26 @@ import {Test} from "forge-std/Test.sol";
 import {ConditionalTokens} from "../src/tokens/ConditionalTokens.sol";
 import {TestUSDC} from "../src/tokens/TestUSDC.sol";
 import {IERC20} from "../src/tokens/ERC20.sol";
-import {MockDKIMRegistry} from "../src/zkemail/MockDKIMRegistry.sol";
-import {ZkRegexVerifierRegistry} from "../src/zkemail/ZkRegexVerifierRegistry.sol";
-import {ZkEmailVerifierV2} from "../src/zkemail/ZkEmailVerifierV2.sol";
-import {CompiledEmailProof, EmailProof} from "../src/zkemail/IZKEmail.sol";
+import {DKIMRegistry} from "../src/zkemail/DKIMRegistry.sol";
+import {DKIMVerifier} from "../src/zkemail/DKIMVerifier.sol";
+import {EmailProof} from "../src/zkemail/IZKEmail.sol";
 import {HeadlineMarket} from "../src/market/HeadlineMarket.sol";
 import {MarketFactory} from "../src/market/MarketFactory.sol";
 import {FPMM} from "../src/market/FPMM.sol";
 
-/// @notice Shared fixture: deploys the whole stack and provides a Solidity-side
-/// mock prover mirroring scripts/prove-email.mjs.
+/// @notice Shared fixture: deploys the whole stack and builds REAL DKIM email proofs —
+/// each `makeProof` canonicalizes a header and signs it with the committed dev RSA key
+/// (via ffi to test/helpers/rsa-sign.mjs), exactly as the onchain DKIMVerifier checks.
 contract MarketTestBase is Test {
     ConditionalTokens ct;
     TestUSDC usdc;
-    MockDKIMRegistry dkim;
-    ZkRegexVerifierRegistry circuitRegistry;
-    ZkEmailVerifierV2 verifier;
+    DKIMRegistry dkim;
+    DKIMVerifier verifier;
     MarketFactory factory;
+
+    bytes devModulus;
+    bytes devExponent;
+    bytes32 devKeyHash;
 
     address alice = makeAddr("alice");
     address bob = makeAddr("bob");
@@ -31,21 +34,25 @@ contract MarketTestBase is Test {
     function setUp() public virtual {
         ct = new ConditionalTokens();
         usdc = new TestUSDC();
-        dkim = new MockDKIMRegistry();
-        circuitRegistry = new ZkRegexVerifierRegistry();
-        verifier = new ZkEmailVerifierV2(dkim, circuitRegistry);
+        dkim = new DKIMRegistry();
+        verifier = new DKIMVerifier(dkim);
         factory = new MarketFactory(ct, verifier, address(new HeadlineMarket()), address(new FPMM()));
 
-        dkim.registerMockKey("nytimes.com");
-        dkim.registerMockKey("email.washingtonpost.com");
-        dkim.registerMockKey("email.reuters.com");
+        (devModulus, devExponent) = devPubKey();
+        devKeyHash = keccak256(devModulus);
+        dkim.registerKey("nytimes.com", "dev2026", devExponent, devModulus);
+        dkim.registerKey("email.washingtonpost.com", "dev2026", devExponent, devModulus);
+        dkim.registerKey("email.reuters.com", "dev2026", devExponent, devModulus);
 
         usdc.mint(alice, 1_000_000e6);
         usdc.mint(bob, 1_000_000e6);
         usdc.mint(carol, 1_000_000e6);
     }
 
-    /// @dev Mirrors the JS mock prover: proof = keccak256(abi.encode(PROOF_DOMAIN, outputs)).
+    /// @dev Builds a REAL DKIM email proof: canonicalizes `from`/`subject` into a header,
+    /// signs it with the dev RSA key, and packages it as the DKIMVerifier expects.
+    /// `nullifier` seeds a distinct signature per call (so replays/dedup behave) by
+    /// appending it to the signed header as a synthetic Message-ID.
     function makeProof(
         string memory domain,
         uint256 timestamp,
@@ -53,59 +60,40 @@ contract MarketTestBase is Test {
         string memory subject,
         string memory body,
         bytes32 nullifier
-    ) internal view returns (EmailProof memory p) {
+    ) internal returns (EmailProof memory p) {
+        bytes memory header = bytes(
+            string.concat(
+                "from:", from, "\r\nsubject:", subject, "\r\nmessage-id:<", vm.toString(nullifier), ">"
+            )
+        );
+        bytes memory signature = rsaSign(header);
         p.domainName = domain;
-        p.publicKeyHash = dkim.mockKeyHash(domain);
+        p.publicKeyHash = devKeyHash;
         p.timestamp = timestamp;
         p.fromAddress = from;
         p.subject = subject;
         p.bodyExcerpt = body;
-        p.emailNullifier = nullifier;
-        p.proof = abi.encodePacked(
-            keccak256(
-                abi.encode(
-                    verifier.PROOF_DOMAIN(),
-                    p.domainName,
-                    p.publicKeyHash,
-                    p.timestamp,
-                    p.fromAddress,
-                    p.subject,
-                    p.bodyExcerpt,
-                    p.emailNullifier
-                )
-            )
-        );
+        p.emailNullifier = keccak256(signature);
+        p.header = header;
+        p.signature = signature;
     }
 
-    /// @dev Mirrors the JS prover's buildCompiledProof: the patterns are "compiled into
-    /// the circuit", so the proof carries pattern commitments instead of email content.
-    function makeCompiledProof(
-        string memory domain,
-        uint256 timestamp,
-        string memory fromRegex,
-        HeadlineMarket.ContentField field,
-        string memory contentPattern,
-        bytes32 nullifier
-    ) internal view returns (CompiledEmailProof memory p) {
-        p.domainName = domain;
-        p.publicKeyHash = dkim.mockKeyHash(domain);
-        p.timestamp = timestamp;
-        p.fromPatternHash = keccak256(bytes(fromRegex));
-        p.contentPatternHash = keccak256(abi.encodePacked(uint8(field), contentPattern));
-        p.emailNullifier = nullifier;
-        p.proof = abi.encodePacked(
-            keccak256(
-                abi.encode(
-                    verifier.COMPILED_PROOF_DOMAIN(),
-                    p.domainName,
-                    p.publicKeyHash,
-                    p.timestamp,
-                    p.fromPatternHash,
-                    p.contentPatternHash,
-                    p.emailNullifier
-                )
-            )
-        );
+    function rsaSign(bytes memory message) internal returns (bytes memory) {
+        string[] memory cmd = new string[](3);
+        cmd[0] = "node";
+        cmd[1] = "test/helpers/rsa-sign.mjs";
+        cmd[2] = vm.toString(message);
+        return vm.ffi(cmd);
+    }
+
+    function devPubKey() internal returns (bytes memory mod, bytes memory exp) {
+        string[] memory cmd = new string[](3);
+        cmd[0] = "node";
+        cmd[1] = "test/helpers/rsa-sign.mjs";
+        cmd[2] = "--pub-n";
+        mod = vm.ffi(cmd);
+        cmd[2] = "--pub-e";
+        exp = vm.ffi(cmd);
     }
 
     function nytSources() internal pure returns (HeadlineMarket.Source[] memory sources) {

@@ -1,13 +1,11 @@
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=email.washingtonpost.com; s=dev2026; t=1786558295;
+ bh=TY08IYRXnN9+o0UBaQaDG7AZEWLKmL+xZ+snMJ6CIgY=; h=from:subject:date:to;
+ b=nZOcjTHOhqZvWsvqTxUGoXdNt1/zyMzu9az1h7tHfodTUt01S7Y0Uus6TbBAZMJF2ldP0eQ8nCs1wJBNzVJesyLpemxl9uVKDOhgiaswcA88NkuL0GbbeijZazM5s9eLMONhAW5cm18pJ9yoOPpHZShRUsyJUUmh5HweuTperw8mg5oW1vIAtvCDBuHsVRb3kqhmEWc61aWoNHxaprrMWs2PQs3ewbACSj31VRQNCD9fYeONsIQUz2yUBEpfZxjOlh5lCxUERxT8hK6xMvUdBpY21aw8sfKECNeyVYMg7yBBK1+HFKP0FabW/9YyfqSMZNYCU6pqmBM001MOjBLB5A==
 Delivered-To: subscriber@example.com
 Received: from a94-113.smtp-out.amazonses.com (a94-113.smtp-out.amazonses.com [54.240.94.113])
         by mx.example.com with ESMTPS id f6g7h8i9j0
         for <subscriber@example.com>; Wed, 12 Aug 2026 14:11:38 -0400 (EDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=email.washingtonpost.com; s=oknawpib3wh3pqlgfhyhpkbmvvqermtw;
-        h=From:To:Subject:Date:MIME-Version:Content-Type; t=1786558298;
-        bh=bW9ja2JvZHloYXNod2Fwb2ZlZGN1dDIwMjZhdWcxMg==;
-        b=TW9jayBES0lNIHNpZ25hdHVyZSBmb3IgdGhlIFdhc2hpbmd0b24gUG9zdCBicmVha2luZy1u
-        ZXdzIGFsZXJ0LiBTdHJ1Y3R1cmFsbHkgZmFpdGhmdWwsIG5vdCBjcnlwdG9ncmFwaGljYWxs
-        eSB2YWxpZC4=
 From: The Washington Post <breaking-news@email.washingtonpost.com>
 To: subscriber@example.com
 Subject: Fed slashes rates in emergency action as credit conditions tighten

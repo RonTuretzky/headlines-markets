@@ -21,8 +21,8 @@ interface IGroth16Verifier {
 /// The residual trust assumption (dev mode) is that the first registrant compiled the
 /// honest circuit for that pattern; production replaces this with a per-circuit
 /// multi-party ceremony whose verifying key is checked against a published
-/// transcript. Markets whose pair has no registered circuit fall back to the mock
-/// keccak proof check (see ZkEmailVerifierV2) so settlement never bricks.
+/// transcript. This registry supports the zk-regex research track (scripts/zkregex,
+/// backlog A3); the live settlement path uses real onchain DKIM verification instead.
 contract ZkRegexVerifierRegistry {
     event CircuitRegistered(
         bytes32 indexed pairHash, bytes32 fromPatternHash, bytes32 contentPatternHash, address verifier
