@@ -39,13 +39,13 @@ see [Trust model](#trust-model--whats-mocked).
 Prereqs: [Foundry](https://getfoundry.sh), Node 22+, pnpm.
 
 ```bash
-# 1. chain — code-size/gas limits off ("as if there are no gas constraints")
-anvil --port 8547 --disable-block-gas-limit --disable-code-size-limit
+# 1. chain (vanilla anvil works: every contract is under EIP-170 and settlement
+#    fits ordinary blocks since the compiled-proof path landed)
+anvil --port 8547
 
 # 2. contracts — deploys the stack + 3 seeded demo markets, writes deployments/local.json
 cd contracts
 forge script script/Deploy.s.sol --rpc-url http://localhost:8547 --broadcast \
-  --disable-code-size-limit \
   --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
 
 # 3. app — syncs ABIs/addresses then serves on http://localhost:5199
@@ -84,12 +84,23 @@ A market is configured at creation with:
 - **window / deadline / buffer** — accepted email `Date` range; after
   `deadline + buffer` anyone can resolve NO.
 
-`submitProof(sourceIndex, EmailProof)` verifies the zkEmail proof (DKIM key valid for
-the domain + proof binds all public fields), checks the From/content regexes and the
-date window, dedupes by email nullifier, and marks the source matched. The K-th
-distinct source reports payout `[1,0]` to ConditionalTokens; `resolveNo()` reports
-`[0,1]`. Both paths are permissionless — the market contract *is* the oracle, and no
-human or committee sits in the loop.
+Two permissionless settlement paths, enforcing identical conditions:
+
+- **Transparent** — `submitProof(sourceIndex, EmailProof)`: the proof reveals the
+  From/subject/body excerpt; the market runs the regexes *onchain* (RegexLib) and
+  stores the quoted subject as evidence. ~2M gas (more with a long body). Great for
+  demos and public evidence.
+- **Compiled** (gas-real, private) — `submitCompiledProof(sourceIndex,
+  CompiledEmailProof)`: the patterns are compiled *into the proving circuit*, which
+  only produces a proof for a matching DKIM-signed email. Onchain the market just
+  checks pattern commitments — no regex interpretation, no email content anywhere,
+  evidence via event. **~126k gas including YES resolution** (≈355k with a real
+  Groth16 pairing check) — a ~20-45x reduction.
+
+Both dedupe by email nullifier (shared across paths) and count toward the same K-of-N
+threshold; the K-th distinct source reports payout `[1,0]` to ConditionalTokens;
+`resolveNo()` reports `[0,1]` after deadline + buffer. The market contract *is* the
+oracle — no human or committee sits in the loop.
 
 ## Market token management
 

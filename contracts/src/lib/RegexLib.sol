@@ -99,14 +99,18 @@ library RegexLib {
     // ---------------------------------------------------------------------
 
     /// @notice JavaScript-style `RegExp.test`: true if `pattern` matches anywhere in `input`.
-    function test(string memory pattern, string memory input) internal pure returns (bool) {
+    /// @dev `public` on purpose: RegexLib deploys once as an external library and is
+    /// delegatecalled, keeping the regex engine out of every market's bytecode (E1).
+    /// (Named `matches` rather than `test` so tooling never mistakes the deployed
+    /// library for a test contract.)
+    function matches(string memory pattern, string memory input) public pure returns (bool) {
         Prog memory p = parse(pattern);
         return run(p, bytes(input));
     }
 
     /// @notice Reverts with a descriptive message if `pattern` is not valid under the
     /// supported subset. Call at market creation so invalid patterns are rejected early.
-    function validate(string memory pattern) internal pure {
+    function validate(string memory pattern) public pure {
         parse(pattern);
     }
 

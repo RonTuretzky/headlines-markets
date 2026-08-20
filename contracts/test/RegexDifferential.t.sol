@@ -119,7 +119,7 @@ contract RegexDifferentialTest is Test {
         assertEq(jsResults.length, inputs.length, "oracle result length");
 
         for (uint256 i = 0; i < inputs.length; i++) {
-            bool ours = RegexLib.test(pattern, inputs[i]);
+            bool ours = RegexLib.matches(pattern, inputs[i]);
             bool theirs = jsResults[i] == 0x01;
             assertEq(ours, theirs, string.concat("mismatch: pattern=<", pattern, "> input=<", inputs[i], ">"));
         }
@@ -154,7 +154,7 @@ contract RegexDifferentialTest is Test {
         bytes memory jsResults = runOracle(json);
 
         for (uint256 p = 0; p < pats.length; p++) {
-            bool ours = RegexLib.test(pats[p], input);
+            bool ours = RegexLib.matches(pats[p], input);
             bool theirs = jsResults[p] == 0x01;
             assertEq(ours, theirs, string.concat("fuzz mismatch: pattern=<", pats[p], "> input=<", input, ">"));
         }

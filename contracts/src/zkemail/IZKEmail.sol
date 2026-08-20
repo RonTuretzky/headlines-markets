@@ -34,6 +34,39 @@ interface IZKEmailVerifier {
     function verify(EmailProof calldata emailProof) external view returns (bool);
 }
 
+/// @notice Public outputs of a COMPILED zk-regex proof (backlog E1/A3): the From and
+/// content patterns are compiled INTO the circuit, which only produces a proof when
+/// the DKIM-signed email actually matches them. The email content therefore never
+/// appears onchain — only commitments identifying which patterns the circuit
+/// enforced (in production these commit to the per-pattern Groth16 verifying key;
+/// here they are keccak hashes of the pattern sources).
+///
+/// This is the gas-real settlement path: no onchain regex interpretation and no
+/// subject/body in calldata. It is also the privacy-real path: a settler proves
+/// "a matching alert exists" without revealing the email.
+struct CompiledEmailProof {
+    /// DKIM signing domain (the `d=` tag), e.g. "nytimes.com"
+    string domainName;
+    /// Hash of the DKIM RSA public key used to sign
+    bytes32 publicKeyHash;
+    /// Email Date header as unix seconds (proven inside the circuit)
+    uint256 timestamp;
+    /// Commitment to the From-address pattern the circuit enforced: keccak256(fromRegex)
+    bytes32 fromPatternHash;
+    /// Commitment to the content condition the circuit enforced:
+    /// keccak256(abi.encodePacked(uint8(contentField), patternSource))
+    bytes32 contentPatternHash;
+    /// Unique per email (hash of the DKIM signature); prevents replay
+    bytes32 emailNullifier;
+    /// The zk proof (mock bytes here; Groth16 points in production)
+    bytes proof;
+}
+
+interface IZkRegexVerifier {
+    /// @notice Returns true iff the compiled proof is valid for its public outputs.
+    function verifyCompiled(CompiledEmailProof calldata compiledProof) external view returns (bool);
+}
+
 interface IDKIMRegistry {
     /// @notice Returns true iff `publicKeyHash` is a valid DKIM key hash for `domainName`.
     function isDKIMPublicKeyHashValid(string calldata domainName, bytes32 publicKeyHash)

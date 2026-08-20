@@ -166,11 +166,16 @@ test("zkEmail settlement: non-matching email is rejected, 2-of-3 alerts resolve 
   await expect(page.getByTestId("source-status")).toContainText("Fed cuts rates", { timeout: 20_000 });
   await expect(page.getByTestId("resolution-panel")).toContainText("1/2 sources matched").catch(() => {});
 
-  // Washington Post alert reaches the 2-of-3 threshold -> YES
+  // Washington Post alert reaches the 2-of-3 threshold -> YES, submitted via the
+  // COMPILED path: pattern commitments only, no content onchain, ~20x cheaper.
+  await page.getByTestId("mode-compiled").click();
   await page.getByTestId("eml-input").setInputFiles(emlPath("wapo-fed-cut.eml"));
+  await expect(page.getByTestId("compiled-note")).toContainText("stay local");
   await expect(page.getByTestId("proof-check-ok")).toContainText("The Washington Post");
   await page.getByTestId("submit-proof").click();
   await expect(page.getByTestId("resolution-panel")).toContainText("Resolved YES", { timeout: 20_000 });
+  // compiled evidence row shows the private marker instead of a subject
+  await expect(page.getByTestId("source-status")).toContainText("settled by private compiled proof");
 
   // trading is frozen, YES holder sees the claim banner and redeems at $1/share
   await expect(page.getByText("Trading closed")).toBeVisible();

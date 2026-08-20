@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-import {EmailProof, IZKEmailVerifier, IDKIMRegistry} from "./IZKEmail.sol";
+import {CompiledEmailProof, EmailProof, IDKIMRegistry, IZKEmailVerifier, IZkRegexVerifier} from "./IZKEmail.sol";
 
 /// @title MockZKEmailVerifier
 /// @notice Mock of zkEmail's Groth16 verifier with the same trust shape:
@@ -15,8 +15,9 @@ import {EmailProof, IZKEmailVerifier, IDKIMRegistry} from "./IZKEmail.sol";
 ///
 /// Swapping this contract for a real zkEmail verifier (and the registry for the real
 /// DKIMRegistry) upgrades the system to trustless settlement with no other changes.
-contract MockZKEmailVerifier is IZKEmailVerifier {
+contract MockZKEmailVerifier is IZKEmailVerifier, IZkRegexVerifier {
     bytes32 public constant PROOF_DOMAIN = keccak256("ZKEMAIL_MOCK_PROOF_V1");
+    bytes32 public constant COMPILED_PROOF_DOMAIN = keccak256("ZKEMAIL_MOCK_COMPILED_PROOF_V1");
 
     IDKIMRegistry public immutable dkimRegistry;
 
@@ -37,6 +38,28 @@ contract MockZKEmailVerifier is IZKEmailVerifier {
                 p.fromAddress,
                 p.subject,
                 p.bodyExcerpt,
+                p.emailNullifier
+            )
+        );
+        return p.proof.length == 32 && bytes32(p.proof) == expected;
+    }
+
+    /// @notice Verify a compiled zk-regex proof. Production shape: look up the Groth16
+    /// verifying key committed to by (fromPatternHash, contentPatternHash) and run the
+    /// pairing check (~230k gas); the circuit itself enforced the pattern matches, so
+    /// no email content appears here at all.
+    function verifyCompiled(CompiledEmailProof calldata p) external view returns (bool) {
+        if (!dkimRegistry.isDKIMPublicKeyHashValid(p.domainName, p.publicKeyHash)) {
+            return false;
+        }
+        bytes32 expected = keccak256(
+            abi.encode(
+                COMPILED_PROOF_DOMAIN,
+                p.domainName,
+                p.publicKeyHash,
+                p.timestamp,
+                p.fromPatternHash,
+                p.contentPatternHash,
                 p.emailNullifier
             )
         );

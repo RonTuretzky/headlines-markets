@@ -4,19 +4,32 @@ import { CheckCircle, Circle, EnvelopeSimple, UploadSimple } from "@phosphor-ico
 import { abis } from "../contracts/gen";
 import { DKIM, Resolution, type MarketData } from "../hooks/useMarkets";
 import { fmtDate, fmtDuration } from "../lib/format";
-import { mockKeyHash, parseEml, buildProof, type EmailProofStruct, type ParsedEmail } from "../lib/prover";
+import {
+  buildCompiledProof,
+  buildProof,
+  mockKeyHash,
+  parseEml,
+  type CompiledProofStruct,
+  type EmailProofStruct,
+  type ParsedEmail,
+} from "../lib/prover";
 import { publicClient, useWallet } from "../lib/wallet";
 import { explain } from "./TradeWidget";
 
+type SettleMode = "transparent" | "compiled";
+
 interface Candidate {
   parsed: ParsedEmail;
-  proof: EmailProofStruct;
-  sourceIndex: number | null; // first source whose domain matches
+  mode: SettleMode;
+  proof: EmailProofStruct | null; // transparent mode
+  compiledProof: CompiledProofStruct | null; // compiled mode
+  sourceIndex: number | null; // the source whose domain matches (domains are unique per market)
   checked: { ok: boolean; reason: string } | null;
 }
 
 export function ResolutionPanel({ m }: { m: MarketData }) {
   const wallet = useWallet();
+  const [mode, setMode] = useState<SettleMode>("transparent");
   const [candidate, setCandidate] = useState<Candidate | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
@@ -35,10 +48,30 @@ export function ResolutionPanel({ m }: { m: MarketData }) {
     try {
       const raw = await file.text();
       const parsed = parseEml(raw);
-      const proof = buildProof(parsed);
       const sourceIndex = m.sources.findIndex((s) => s.dkimDomain === parsed.domainName);
+      if (sourceIndex < 0) {
+        setCandidate({ parsed, mode, proof: null, compiledProof: null, sourceIndex: null, checked: null });
+        return;
+      }
+      const src = m.sources[sourceIndex];
       let checked: Candidate["checked"] = null;
-      if (sourceIndex >= 0) {
+      if (mode === "compiled") {
+        // The "circuit" evaluates the patterns locally; content never goes onchain.
+        const compiledProof = buildCompiledProof(parsed, {
+          fromRegex: src.fromRegex,
+          contentField: m.contentField,
+          contentPattern: src.contentRegex || m.contentRegex,
+        });
+        const [ok, reason] = (await publicClient.readContract({
+          address: m.market,
+          abi: abis.HeadlineMarket,
+          functionName: "checkCompiledProof",
+          args: [BigInt(sourceIndex), compiledProof],
+        })) as [boolean, string];
+        checked = { ok, reason };
+        setCandidate({ parsed, mode, proof: null, compiledProof, sourceIndex, checked });
+      } else {
+        const proof = buildProof(parsed);
         const [ok, reason] = (await publicClient.readContract({
           address: m.market,
           abi: abis.HeadlineMarket,
@@ -46,8 +79,8 @@ export function ResolutionPanel({ m }: { m: MarketData }) {
           args: [BigInt(sourceIndex), proof],
         })) as [boolean, string];
         checked = { ok, reason };
+        setCandidate({ parsed, mode, proof, compiledProof: null, sourceIndex, checked });
       }
-      setCandidate({ parsed, proof, sourceIndex: sourceIndex >= 0 ? sourceIndex : null, checked });
     } catch (e) {
       setFileError(explain(e));
     }
@@ -73,8 +106,11 @@ export function ResolutionPanel({ m }: { m: MarketData }) {
       await wallet.write({
         address: m.market,
         abi: abis.HeadlineMarket,
-        functionName: "submitProof",
-        args: [BigInt(candidate.sourceIndex), candidate.proof],
+        functionName: candidate.mode === "compiled" ? "submitCompiledProof" : "submitProof",
+        args: [
+          BigInt(candidate.sourceIndex),
+          candidate.mode === "compiled" ? candidate.compiledProof! : candidate.proof!,
+        ],
       });
       setSettledNote(`Proof accepted for ${m.sources[candidate.sourceIndex].name}.`);
       setCandidate(null);
@@ -121,7 +157,12 @@ export function ResolutionPanel({ m }: { m: MarketData }) {
                 <span className="text-caption text-surface-grey-2">({s.dkimDomain})</span>
                 {ev && (
                   <div className="text-caption text-surface-grey-2">
-                    “{ev.subject}” · {fmtDate(ev.emailTimestamp)} · submitted by {short(ev.submitter)}
+                    {ev.compiled ? (
+                      <em>settled by private compiled proof</em>
+                    ) : (
+                      <>“{ev.subject}”</>
+                    )}{" "}
+                    · {fmtDate(ev.emailTimestamp)} · submitted by {short(ev.submitter)}
                   </div>
                 )}
               </div>
@@ -143,6 +184,32 @@ export function ResolutionPanel({ m }: { m: MarketData }) {
 
       {open && (
         <>
+          <div className="mb-2 flex border-2 border-surface-ink text-sm">
+            <button
+              data-testid="mode-transparent"
+              onClick={() => {
+                setMode("transparent");
+                setCandidate(null);
+              }}
+              className={`flex-1 px-2 py-1.5 font-bold ${
+                mode === "transparent" ? "bg-surface-ink text-paper-0" : "bg-paper-0"
+              }`}
+            >
+              Transparent proof
+            </button>
+            <button
+              data-testid="mode-compiled"
+              onClick={() => {
+                setMode("compiled");
+                setCandidate(null);
+              }}
+              className={`flex-1 px-2 py-1.5 font-bold ${
+                mode === "compiled" ? "bg-surface-ink text-paper-0" : "bg-paper-0"
+              }`}
+            >
+              Compiled proof (private, ~20x cheaper)
+            </button>
+          </div>
           <label
             className="flex cursor-pointer items-center justify-center gap-2 border-2 border-dashed border-surface-ink bg-paper-1 px-3 py-6 font-bold hover:bg-paper-2"
             data-testid="eml-drop"
@@ -171,8 +238,15 @@ export function ResolutionPanel({ m }: { m: MarketData }) {
           {candidate && (
             <div className="mt-3 border-2 border-surface-ink bg-paper-0 p-3" data-testid="proof-preview">
               <div className="mb-2 flex items-center gap-2 font-bold">
-                <EnvelopeSimple size={18} /> Extracted proof fields
+                <EnvelopeSimple size={18} />
+                {candidate.mode === "compiled" ? "Compiled proof (content stays private)" : "Extracted proof fields"}
               </div>
+              {candidate.mode === "compiled" && (
+                <p className="mb-2 text-caption text-surface-grey-2" data-testid="compiled-note">
+                  The market's patterns are compiled into the circuit; the proof only certifies "a matching
+                  DKIM-signed email exists". The fields below stay local — only pattern commitments go onchain.
+                </p>
+              )}
               <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
                 <dt className="text-surface-grey-2">DKIM domain</dt>
                 <dd className="font-mono">{candidate.parsed.domainName}</dd>

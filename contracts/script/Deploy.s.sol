@@ -10,6 +10,7 @@ import {MockZKEmailVerifier} from "../src/zkemail/MockZKEmailVerifier.sol";
 import {HeadlineMarket} from "../src/market/HeadlineMarket.sol";
 import {MarketFactory} from "../src/market/MarketFactory.sol";
 import {FPMM} from "../src/market/FPMM.sol";
+import {MarketDeployer, FPMMDeployer} from "../src/market/Deployers.sol";
 import {Multicall3} from "../src/utils/Multicall3.sol";
 
 /// @notice Deploys the full stack to a local anvil chain, seeds demo markets and
@@ -31,7 +32,8 @@ contract Deploy is Script {
         TestUSDC usdc = new TestUSDC();
         MockDKIMRegistry dkim = new MockDKIMRegistry();
         MockZKEmailVerifier verifier = new MockZKEmailVerifier(dkim);
-        MarketFactory factory = new MarketFactory(ct, verifier);
+        MarketFactory factory =
+            new MarketFactory(ct, verifier, new MarketDeployer(), new FPMMDeployer());
 
         // Register mock DKIM keys for the newspapers used by the demo markets.
         // (Also permissionless via registerMockKey for any new domain.)

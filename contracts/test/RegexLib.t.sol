@@ -6,7 +6,7 @@ import {RegexLib} from "../src/lib/RegexLib.sol";
 
 contract RegexLibHarness {
     function matchPattern(string memory pattern, string memory input) external pure returns (bool) {
-        return RegexLib.test(pattern, input);
+        return RegexLib.matches(pattern, input);
     }
 
     function validatePattern(string memory pattern) external pure {

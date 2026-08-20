@@ -6,6 +6,7 @@ import {IERC20} from "../tokens/ERC20.sol";
 import {IZKEmailVerifier} from "../zkemail/IZKEmail.sol";
 import {HeadlineMarket} from "./HeadlineMarket.sol";
 import {FPMM} from "./FPMM.sol";
+import {MarketDeployer, FPMMDeployer} from "./Deployers.sol";
 
 /// @title MarketFactory
 /// @notice Permissionless factory: anyone can open a headline market. Deploys the
@@ -49,19 +50,28 @@ contract MarketFactory {
 
     ConditionalTokens public immutable conditionalTokens;
     IZKEmailVerifier public immutable verifier;
+    MarketDeployer public immutable marketDeployer;
+    FPMMDeployer public immutable fpmmDeployer;
 
     MarketRecord[] internal _markets;
 
-    constructor(ConditionalTokens _conditionalTokens, IZKEmailVerifier _verifier) {
+    constructor(
+        ConditionalTokens _conditionalTokens,
+        IZKEmailVerifier _verifier,
+        MarketDeployer _marketDeployer,
+        FPMMDeployer _fpmmDeployer
+    ) {
         conditionalTokens = _conditionalTokens;
         verifier = _verifier;
+        marketDeployer = _marketDeployer;
+        fpmmDeployer = _fpmmDeployer;
     }
 
     function createMarket(CreateMarketParams calldata params)
         external
         returns (HeadlineMarket market, FPMM fpmm)
     {
-        market = new HeadlineMarket(
+        market = marketDeployer.deploy(
             conditionalTokens,
             verifier,
             params.collateralToken,
@@ -76,7 +86,7 @@ contract MarketFactory {
             params.deadline,
             params.resolutionBuffer
         );
-        fpmm = new FPMM(conditionalTokens, params.collateralToken, market.conditionId(), params.fee);
+        fpmm = fpmmDeployer.deploy(conditionalTokens, params.collateralToken, market.conditionId(), params.fee);
 
         if (params.initialLiquidity > 0) {
             require(

@@ -36,6 +36,19 @@ export interface EmailProofStruct {
   proof: Hex;
 }
 
+export const COMPILED_PROOF_DOMAIN = keccak256(stringToHex("ZKEMAIL_MOCK_COMPILED_PROOF_V1"));
+
+/** Public outputs of a COMPILED zk-regex proof: pattern commitments, no email content. */
+export interface CompiledProofStruct {
+  domainName: string;
+  publicKeyHash: Hex;
+  timestamp: bigint;
+  fromPatternHash: Hex;
+  contentPatternHash: Hex;
+  emailNullifier: Hex;
+  proof: Hex;
+}
+
 const BODY_EXCERPT_MAX = 4096; // like zkEmail's bounded body bytes
 
 export function parseEml(raw: string): ParsedEmail {
@@ -172,6 +185,82 @@ export function buildProof(parsed: ParsedEmail): EmailProofStruct {
 
 export function proveEml(raw: string): EmailProofStruct {
   return buildProof(parseEml(raw));
+}
+
+/** JS mirror of the onchain regex subset ((?i) prefix -> i flag), used to evaluate
+ * the "circuit" locally. Differential-tested against RegexLib in Foundry. */
+export function subsetRegexTest(pattern: string, input: string): boolean {
+  let src = pattern;
+  let flags = "";
+  if (src.startsWith("(?i)")) {
+    src = src.slice(4);
+    flags = "i";
+  }
+  return new RegExp(src, flags).test(input);
+}
+
+/**
+ * Build a COMPILED zk-regex proof (backlog E1/A3): the patterns are compiled into
+ * the circuit, which only produces a proof when the email matches them — so this
+ * mock evaluates the patterns locally and refuses to "prove" a non-matching email.
+ * Onchain, only the pattern commitments appear; the subject/body never leave the
+ * prover. contentField: 0 = Subject, 1 = Body, 2 = SubjectOrBody.
+ */
+export function buildCompiledProof(
+  parsed: ParsedEmail,
+  opts: { fromRegex: string; contentField: number; contentPattern: string },
+): CompiledProofStruct {
+  if (opts.fromRegex && !subsetRegexTest(opts.fromRegex, parsed.fromAddress)) {
+    throw new Error("The circuit would produce no proof: the From address does not match the market's pattern");
+  }
+  const contentOk =
+    opts.contentPattern.length === 0 ||
+    (opts.contentField === 0
+      ? subsetRegexTest(opts.contentPattern, parsed.subject)
+      : opts.contentField === 1
+        ? subsetRegexTest(opts.contentPattern, parsed.bodyExcerpt)
+        : subsetRegexTest(opts.contentPattern, parsed.subject) ||
+          subsetRegexTest(opts.contentPattern, parsed.bodyExcerpt));
+  if (!contentOk) {
+    throw new Error("The circuit would produce no proof: the email content does not match the market's pattern");
+  }
+
+  const publicKeyHash = mockKeyHash(parsed.domainName);
+  const fromPatternHash = keccak256(stringToHex(opts.fromRegex));
+  const contentPatternHash = keccak256(
+    encodePacked(["uint8", "string"], [opts.contentField, opts.contentPattern]),
+  );
+  const proof = keccak256(
+    encodeAbiParameters(
+      [
+        { type: "bytes32" },
+        { type: "string" },
+        { type: "bytes32" },
+        { type: "uint256" },
+        { type: "bytes32" },
+        { type: "bytes32" },
+        { type: "bytes32" },
+      ],
+      [
+        COMPILED_PROOF_DOMAIN,
+        parsed.domainName,
+        publicKeyHash,
+        BigInt(parsed.timestamp),
+        fromPatternHash,
+        contentPatternHash,
+        parsed.nullifier,
+      ],
+    ),
+  );
+  return {
+    domainName: parsed.domainName,
+    publicKeyHash,
+    timestamp: BigInt(parsed.timestamp),
+    fromPatternHash,
+    contentPatternHash,
+    emailNullifier: parsed.nullifier,
+    proof,
+  };
 }
 
 /**

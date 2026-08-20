@@ -82,10 +82,24 @@ DKIM domain → email date within `[windowStart, deadline]` → From matches `fr
 → content matches the effective regex (per-source override, else market default;
 against subject, body, or either). Accepting the K-th distinct source reports `[1,0]`.
 
+**Compiled settlement path (backlog E1/A3).** `submitCompiledProof(sourceIndex,
+CompiledEmailProof)` is the gas-real, privacy-real twin of `submitProof`: the From and
+content patterns are compiled *into the proving circuit*, which only produces a proof
+for a DKIM-signed email that matches them. The proof's public outputs are pattern
+*commitments* (`keccak(fromRegex)` and `keccak(field ++ effectivePattern)` — standing
+in for per-pattern Groth16 verifying keys), which the market checks against
+commitments fixed at construction, so both paths enforce identical conditions. No
+onchain regex, no email content in calldata, evidence via `CompiledProofAccepted`
+event only. Measured: **126k gas including YES resolution + payout reporting**, vs
+~2M for the interpreted path (5.7M with a real 4KB email body) — add ~230k for a
+production Groth16 pairing check. Nullifiers are shared across both paths, so the
+same email can never be counted twice regardless of path.
+
 `resolveNo()` requires `now > deadline + resolutionBuffer` — the buffer is a grace
 period so late-arriving proofs of in-window emails can still settle YES before anyone
-can force NO. `checkProof` is a view dry-run returning `(ok, reason)`; the frontend
-calls it before spending a transaction, and settlement bots can too.
+can force NO. `checkProof` / `checkCompiledProof` are view dry-runs returning
+`(ok, reason)`; the frontend calls them before spending a transaction, and settlement
+bots can too.
 
 ### `market/FPMM.sol` — trading venue
 
@@ -110,12 +124,19 @@ Gnosis `FixedProductMarketMaker` (Polymarket's original AMM), binary-specialised
 - Prices: `marginalPrice(i) = oppositeBalance / (yes + no)`, a 0..1 probability the
   UI shows in cents. LP shares are collateral-scale (Gnosis convention).
 
-### `market/MarketFactory.sol`
+### `market/MarketFactory.sol` + `market/Deployers.sol`
 
 `createMarket(params)` deploys the market (which self-registers its condition) and its
 FPMM, optionally pulls `initialLiquidity` from the creator and funds the pool in the
 same transaction (LP shares + any hint surplus go to the creator), and records the
 pair in an enumerable registry. No allowlists, no admin.
+
+Size discipline (E1): `new Child()` embeds the child's initcode in the creator's
+runtime, so the CREATEs live in two stateless deployer contracts, and RegexLib
+deploys once as an external linked library (its `matches`/`validate` are `public`).
+Result: every contract is under the EIP-170 24,576-byte limit (MarketFactory
+42.5KB → 3.2KB) and the whole system deploys on a vanilla EVM chain with no
+size/gas overrides.
 
 ### Deviations from production Polymarket (by design)
 

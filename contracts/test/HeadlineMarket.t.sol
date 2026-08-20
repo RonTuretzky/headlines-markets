@@ -5,7 +5,7 @@ import {MarketTestBase} from "./MarketTestBase.sol";
 import {HeadlineMarket} from "../src/market/HeadlineMarket.sol";
 import {MarketFactory} from "../src/market/MarketFactory.sol";
 import {FPMM} from "../src/market/FPMM.sol";
-import {EmailProof} from "../src/zkemail/IZKEmail.sol";
+import {CompiledEmailProof, EmailProof} from "../src/zkemail/IZKEmail.sol";
 
 contract HeadlineMarketTest is MarketTestBase {
     HeadlineMarket market;
@@ -72,9 +72,10 @@ contract HeadlineMarketTest is MarketTestBase {
     }
 
     function test_CannotBrickMarketByFrontRunningCondition() public {
-        // Attacker predicts the next market's address (factory's next CREATE) and
-        // pre-prepares its condition. Creation must still succeed (idempotent prepare).
-        address predictedMarket = vm.computeCreateAddress(address(factory), vm.getNonce(address(factory)));
+        // Attacker predicts the next market's address (the MarketDeployer's next CREATE)
+        // and pre-prepares its condition. Creation must still succeed (idempotent prepare).
+        address deployer = address(factory.marketDeployer());
+        address predictedMarket = vm.computeCreateAddress(deployer, vm.getNonce(deployer));
         bytes32 qid = keccak256(abi.encodePacked("HEADLINE_MARKET_V1", predictedMarket));
         ct.prepareCondition(predictedMarket, qid, 2); // front-run
 

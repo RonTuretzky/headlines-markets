@@ -7,9 +7,10 @@ import {TestUSDC} from "../src/tokens/TestUSDC.sol";
 import {IERC20} from "../src/tokens/ERC20.sol";
 import {MockDKIMRegistry} from "../src/zkemail/MockDKIMRegistry.sol";
 import {MockZKEmailVerifier} from "../src/zkemail/MockZKEmailVerifier.sol";
-import {EmailProof} from "../src/zkemail/IZKEmail.sol";
+import {CompiledEmailProof, EmailProof} from "../src/zkemail/IZKEmail.sol";
 import {HeadlineMarket} from "../src/market/HeadlineMarket.sol";
 import {MarketFactory} from "../src/market/MarketFactory.sol";
+import {MarketDeployer, FPMMDeployer} from "../src/market/Deployers.sol";
 import {FPMM} from "../src/market/FPMM.sol";
 
 /// @notice Shared fixture: deploys the whole stack and provides a Solidity-side
@@ -31,7 +32,7 @@ contract MarketTestBase is Test {
         usdc = new TestUSDC();
         dkim = new MockDKIMRegistry();
         verifier = new MockZKEmailVerifier(dkim);
-        factory = new MarketFactory(ct, verifier);
+        factory = new MarketFactory(ct, verifier, new MarketDeployer(), new FPMMDeployer());
 
         dkim.registerMockKey("nytimes.com");
         dkim.registerMockKey("email.washingtonpost.com");
@@ -68,6 +69,37 @@ contract MarketTestBase is Test {
                     p.fromAddress,
                     p.subject,
                     p.bodyExcerpt,
+                    p.emailNullifier
+                )
+            )
+        );
+    }
+
+    /// @dev Mirrors the JS prover's buildCompiledProof: the patterns are "compiled into
+    /// the circuit", so the proof carries pattern commitments instead of email content.
+    function makeCompiledProof(
+        string memory domain,
+        uint256 timestamp,
+        string memory fromRegex,
+        HeadlineMarket.ContentField field,
+        string memory contentPattern,
+        bytes32 nullifier
+    ) internal view returns (CompiledEmailProof memory p) {
+        p.domainName = domain;
+        p.publicKeyHash = dkim.mockKeyHash(domain);
+        p.timestamp = timestamp;
+        p.fromPatternHash = keccak256(bytes(fromRegex));
+        p.contentPatternHash = keccak256(abi.encodePacked(uint8(field), contentPattern));
+        p.emailNullifier = nullifier;
+        p.proof = abi.encodePacked(
+            keccak256(
+                abi.encode(
+                    verifier.COMPILED_PROOF_DOMAIN(),
+                    p.domainName,
+                    p.publicKeyHash,
+                    p.timestamp,
+                    p.fromPatternHash,
+                    p.contentPatternHash,
                     p.emailNullifier
                 )
             )

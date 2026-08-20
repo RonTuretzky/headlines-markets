@@ -6,7 +6,10 @@
 //     --question "U.S. national debt tops $40 trillion?" \
 //     --regex "(?i)debt (hits|tops) \$40 trillion" \
 //     [--source-name "The New York Times"] [--liquidity 5000] [--buy-yes 500] \
-//     [--rpc http://localhost:8547] [--no-settle]
+//     [--rpc http://localhost:8547] [--no-settle] [--compiled]
+//
+// --compiled settles via the compiled zk-regex path: pattern commitments only,
+// no email content onchain, ~20x cheaper than the transparent path.
 //
 // The market's source is derived from the email itself (DKIM domain + exact From
 // address), so the proof is guaranteed to target the right slot. The creator is
@@ -15,7 +18,7 @@
 import { readFileSync } from "node:fs";
 import { createPublicClient, createWalletClient, http, publicActions, parseUnits } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { proveEml, mockKeyHash } from "../src/lib/prover.ts";
+import { buildCompiledProof, mockKeyHash, parseEml, proveEml } from "../src/lib/prover.ts";
 import { abis, deployment } from "../src/contracts/gen.ts";
 
 const args = process.argv.slice(2);
@@ -150,19 +153,34 @@ if (args.includes("--no-settle")) {
 }
 
 // 6. Carol (uninvolved third party) settles permissionlessly with the proof.
+const compiledMode = args.includes("--compiled");
+const settleProof = compiledMode
+  ? buildCompiledProof(parseEml(readFileSync(emlPath, "utf8")), {
+      fromRegex,
+      contentField: 0,
+      contentPattern: regex,
+    })
+  : proof;
 const [ok, reason] = await pub.readContract({
   address: rec.market,
   abi: abis.HeadlineMarket,
-  functionName: "checkProof",
-  args: [0n, proof],
+  functionName: compiledMode ? "checkCompiledProof" : "checkProof",
+  args: [0n, settleProof],
 });
 if (!ok) {
-  console.error(`\ncheckProof rejected the email: ${reason}`);
+  console.error(`\ncheck rejected the email: ${reason}`);
   process.exit(1);
 }
-await send(carol, { address: rec.market, abi: abis.HeadlineMarket, functionName: "submitProof", args: [0n, proof] });
+const settleRc = await send(carol, {
+  address: rec.market,
+  abi: abis.HeadlineMarket,
+  functionName: compiledMode ? "submitCompiledProof" : "submitProof",
+  args: [0n, settleProof],
+});
 const resolution = await pub.readContract({ address: rec.market, abi: abis.HeadlineMarket, functionName: "resolution" });
-console.log(`\nCarol submitted the zkEmail proof — resolution: ${["Unresolved", "YES", "NO"][resolution]}`);
+console.log(
+  `\nCarol settled via ${compiledMode ? "COMPILED (private)" : "transparent"} proof — resolution: ${["Unresolved", "YES", "NO"][resolution]} — gas used: ${settleRc.gasUsed.toLocaleString()}`,
+);
 
 // 7. Bob redeems if he bought.
 if (buyYes > 0n) {
