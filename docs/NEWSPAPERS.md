@@ -9,7 +9,28 @@ it will drop straight into the app's settle flow.
 
 ## What is verified vs inferred
 
-**Verified**
+**Verified from a real received email (2026-08-20, raw `.eml` in hand)** — a genuine
+NYT *Today's Headlines* digest was run through the prover and used to settle a live
+demo market end-to-end:
+
+- **DKIM**: `d=nytimes.com; s=scph20250409; a=rsa-sha256` — the selector the DNS
+  probing couldn't recover. SparkPost `scph`-prefixed selector, as predicted.
+- **Sender (Today's Headlines digest)**: `todaysheadlines-noreply@nytimes.com`,
+  display name "The New York Times". So NYT uses *per-product* local-parts:
+  `nytdirect@` for classic alerts, `todaysheadlines-noreply@` for the digest —
+  configure market From-regexes accordingly.
+- **Subject format**: `Today's Headlines: <full headline sentence>`, RFC 2047
+  B-encoded UTF-8 split across folded header lines (curly apostrophes and all).
+- **Envelope**: bounce domain `bounce.nytimes.com` via `mta-*.sparkpostmail.com`;
+  Gmail records `dkim=pass`, `spf=pass`, `dmarc=pass (p=REJECT)` — confirming the
+  alignment property the market's `dkimDomain` check relies on.
+- **Body**: quoted-printable HTML (~160KB) — the headline lives in the Subject and
+  the `<title>`, so Subject-matching markets are the robust configuration.
+
+The raw file itself is not committed (it contains the recipient's personal address
+and per-recipient tracking tokens); it lives untracked under `.context/`.
+
+**Verified (earlier research)**
 - **NYT sender**: `nytdirect@nytimes.com`, display name "The New York Times" —
   NYT's long-standing alert/newsletter From address.
 - **NYT subject format**: `Breaking News: <full one-sentence headline>`. Verbatim

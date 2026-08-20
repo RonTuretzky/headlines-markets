@@ -12,9 +12,11 @@ export const NEWSPAPERS: NewspaperPreset[] = [
   {
     name: "The New York Times",
     dkimDomain: "nytimes.com",
-    fromRegex: "^nytdirect@nytimes\\.com$",
+    // Per-product local-parts: nytdirect@ = breaking alerts, todaysheadlines-noreply@ =
+    // the Today's Headlines digest (both verified from real received email).
+    fromRegex: "^(nytdirect|todaysheadlines-noreply)@nytimes\\.com$",
     verified: true,
-    note: "Breaking News Alerts from nytdirect@nytimes.com (verified sender; DMARC p=reject aligns DKIM to nytimes.com)",
+    note: "Alerts from nytdirect@ / digest from todaysheadlines-noreply@nytimes.com (verified from a real email: DKIM d=nytimes.com s=scph20250409, DMARC p=reject)",
   },
   {
     name: "The Washington Post",
