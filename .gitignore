@@ -25,3 +25,4 @@ circuits/manifest.json
 
 # zk-regex research-track generated verifier (regenerate with pnpm zk:build)
 contracts/deployments/dkim-keys.json
+app/tsconfig.tsbuildinfo

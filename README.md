@@ -27,6 +27,20 @@ real NYT email verify end to end.
                           └──────────────────┘                     └───────────────────┘
 ```
 
+## See it in action
+
+**Browse & trade** — market cards with live sparklines, a price-history chart with crosshair, and the Polymarket-style buy widget ("To win $X").
+
+![browse and trade](docs/assets/browse-and-trade.gif)
+
+**Open a market, permissionlessly** — pick newspapers, write a regex with the live tester, set odds and liquidity.
+
+![create a market](docs/assets/create-market.gif)
+
+**Settle with a real DKIM proof** — upload a signed `.eml`; its RSA-SHA256 signature is verified onchain against the newspaper's published key; the 2-of-3 threshold resolves the market YES.
+
+![settle with a real DKIM proof](docs/assets/settle-dkim.gif)
+
 ## Repo layout
 
 | Path | What |

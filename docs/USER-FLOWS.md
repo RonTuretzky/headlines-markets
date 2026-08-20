@@ -18,8 +18,9 @@ Playwright tests on a fresh chain per run). Steps marked ⚙ are transactions.
    see match/no-match as you type (browser `RegExp` mirrors the onchain subset).
 5. *Market*: deadline, NO-buffer, initial liquidity, trading fee %, opening odds
    slider (5¢–95¢, becomes the FPMM `distributionHint`).
-6. ⚙ Approve collateral (if seeding) → ⚙ `registerMockKey` for any unknown domains
-   (mock-mode convenience) → ⚙ `createMarket` → land on the live market page.
+6. ⚙ Approve collateral (if seeding) → ⚙ `createMarket` → land on the live market
+   page. (Settling a custom-domain market later requires that domain's real DKIM key
+   registered in `DKIMRegistry` and a real signed email from it.)
 
 Foundry coverage adds the validation matrix: bad thresholds, past deadlines, and
 malformed regexes all revert at creation.
@@ -47,18 +48,21 @@ malformed regexes all revert at creation.
 
 ## 4. Settle YES (permissionless — anyone, not just traders)
 
+![settle with a real DKIM proof](assets/settle-dkim.gif)
+
+
 1. Get the alert email raw: Gmail → ⋮ → *Show original* → *Download original*
    (`.eml`). Samples live in `emails/`.
-2. Market page → Resolution panel → **upload the `.eml`**. The in-browser mock
-   prover extracts DKIM domain, From, Subject, Date, body excerpt, nullifier and
-   builds the proof.
-3. The app maps the domain to the market's source slot and dry-runs `checkProof`,
-   showing the exact acceptance verdict before any transaction — e.g.
-   ✗ `content regex mismatch` for a Morning-Briefing email, ✓ for the breaking
-   alert.
-4. ⚙ `submitProof`. The source row flips to ✓ with the quoted subject, timestamp
-   and submitter. When the K-th distinct newspaper is proven, the market resolves
-   **YES** in the same transaction.
+2. Market page → Resolution panel → **upload the `.eml`**. The browser canonicalizes
+   the signed headers (RFC 6376) and extracts the RSA signature, From, Subject, Date
+   and nullifier — no signing, just parsing a real signed email.
+3. The app resolves the domain's DKIM key from the registry and dry-runs `checkProof`;
+   the onchain `DKIMVerifier` does the real RSA-SHA256 check and the market's regex.
+   The verdict shows before any transaction — ✗ `content regex mismatch` for a
+   Morning-Briefing email, ✓ (with a "Valid DKIM signature" seal) for the breaking alert.
+4. ⚙ `submitProof`. The RSA signature is verified onchain; the source row flips to ✓
+   with the quoted subject, timestamp and submitter. When the K-th distinct newspaper
+   is proven, the market resolves **YES** in the same transaction.
 
 Contract tests cover the full rejection matrix (wrong domain/From/content, tampered
 fields, unknown DKIM key, out-of-window dates, replayed emails, duplicate sources).

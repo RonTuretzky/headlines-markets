@@ -1,23 +1,24 @@
 import { defineConfig } from "@playwright/test";
 
-// E2E runs against its own anvil (port 8548, spawned in global-setup) and its own
-// vite dev server (port 5198), so it never interferes with the dev environment.
+// Records smooth videos of the core flows (converted to GIFs by scripts/make-gifs.sh).
+// Reuses the e2e harness: its own anvil (8548) + vite (5198) on a fresh chain.
 export default defineConfig({
   testDir: "./e2e",
-  testIgnore: /record\.spec\.ts/,
+  testMatch: /record\.spec\.ts/,
   fullyParallel: false,
   workers: 1,
   retries: 0,
-  timeout: 60_000,
-  expect: { timeout: 15_000 },
+  timeout: 180_000,
   globalSetup: "./e2e/global-setup.ts",
   globalTeardown: "./e2e/global-teardown.ts",
   use: {
     baseURL: "http://localhost:5198",
-    trace: "retain-on-failure",
+    viewport: { width: 1200, height: 780 },
+    deviceScaleFactor: 2,
+    video: { mode: "on", size: { width: 1200, height: 780 } },
+    launchOptions: { slowMo: 300 },
   },
   webServer: {
-    // sync-contracts runs AFTER global-setup's fresh deploy wrote deployments/local.json
     command: "node scripts/sync-contracts.mjs && VITE_RPC_URL=http://localhost:8548 npx vite --port 5198 --strictPort",
     port: 5198,
     reuseExistingServer: false,

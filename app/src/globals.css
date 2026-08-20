@@ -12,4 +12,77 @@
 body {
   background-color: #f6f3eb; /* paper-main */
   color: #1b201a; /* surface-ink */
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* --- Silky-smooth defaults --- */
+
+/* Interactive elements ease their color/shadow/transform changes. */
+button,
+a,
+input,
+select,
+textarea,
+[role="button"],
+.bread-card {
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease,
+    box-shadow 150ms ease,
+    transform 150ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity 150ms ease;
+}
+
+/* A single, consistent keyboard focus ring in the brand orange. */
+:focus-visible {
+  outline: 2px solid #ea5817;
+  outline-offset: 2px;
+}
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none;
+}
+
+/* Cards lift a touch and deepen their shadow on hover. */
+.bread-card {
+  box-shadow: 0.25rem 0.25rem 0px 0px #595959;
+}
+a .bread-card:hover,
+.bread-card.interactive:hover {
+  box-shadow: 0.35rem 0.35rem 0px 0px #595959;
+}
+
+/* Route content fades/rises in. */
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+main,
+[data-page] {
+  animation: rise-in 240ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+/* Numbers that tick (prices, balances) crossfade rather than snap. */
+[data-tabular] {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Honor reduced-motion. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
