@@ -1,0 +1,71 @@
+# Static GitHub Pages deploy of the frontend, indexing the etherform Gnosis deployment.
+# The build reads addresses + ABIs from contracts/deployments/gnosis.json (written by
+# script/DeployGnosis.s.sol / etherform) and bakes them into a static bundle — no
+# backend, HashRouter routing, connects an injected wallet to Gnosis (chain 100).
+name: Pages
+on:
+  push:
+    branches: [main]
+    paths:
+      - "app/**"
+      - "contracts/src/**"
+      - "contracts/deployments/gnosis.json"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 8
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: app/pnpm-lock.yaml
+
+      # ABIs come from the compiled contracts; addresses from the committed
+      # etherform deploy artifact (contracts/deployments/gnosis.json).
+      - name: Build contracts (ABIs)
+        working-directory: contracts
+        run: forge build
+
+      - name: Install frontend deps
+        working-directory: app
+        run: pnpm install --frozen-lockfile
+
+      - name: Build the static site (Gnosis deployment)
+        working-directory: app
+        env:
+          DEPLOYMENT: gnosis
+          VITE_BASE: /${{ github.event.repository.name }}/
+        run: pnpm build
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: app/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
