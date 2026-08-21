@@ -29,6 +29,13 @@ real NYT email verify end to end.
 
 ## Live on Gnosis mainnet (chain 100)
 
+**App: https://ronturetzky.github.io/headlines-markets/** — a static GitHub Pages
+bundle (no backend) that auto-indexes the deployment from
+`contracts/deployments/gnosis.json`, reads markets live from Gnosis, and connects an
+injected wallet to trade/settle. Rebuilt + redeployed by `.github/workflows/pages.yml`
+on every push (same crowdstake.fun pattern).
+
+
 Deployed 2026-08-21, **all contracts verified** on [gnosisscan.io](https://gnosisscan.io) (Blockscout):
 
 | Contract | Address |

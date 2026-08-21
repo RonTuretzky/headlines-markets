@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Header } from "./components/Header";
 import { ToastProvider } from "./components/Toast";
 import { WalletProvider } from "./lib/wallet";
+import { IS_LOCAL } from "./config";
 import { CreatePage } from "./pages/CreatePage";
 import { MarketPage } from "./pages/MarketPage";
 import { MarketsPage } from "./pages/MarketsPage";
@@ -37,8 +38,9 @@ export default function App() {
               <Route path="/portfolio" element={<Page><PortfolioPage /></Page>} />
             </Routes>
             <footer className="mt-12 border-t-2 border-surface-ink bg-paper-0 px-4 py-6 text-center text-caption text-surface-grey-2">
-              Headlines — prediction markets settled by zkEmail proofs of newspaper breaking-news alerts.
-              Local demo on anvil: real DKIM (RSA-SHA256) signatures verified onchain, Conditional Tokens settlement à la Polymarket.
+              Headlines — prediction markets settled by real DKIM (RSA-SHA256) signatures verified onchain,
+              Conditional Tokens settlement à la Polymarket.{" "}
+              {IS_LOCAL ? "Local demo on anvil." : "Live on Gnosis mainnet — connect a wallet to trade."}
             </footer>
           </div>
         </HashRouter>
