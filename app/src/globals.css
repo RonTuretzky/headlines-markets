@@ -1,6 +1,16 @@
 @import "tailwindcss";
 @import "@breadcoop/ui/theme";
 
+/* Tailwind v4 does not scan node_modules by default, so the utility classes used
+   *inside* bread-ui-kit's compiled components (button shadows, disabled states,
+   text-paper-main, hover variants…) get purged from the production build and the
+   Buttons render unstyled. Register the kit's dist as a content source so all its
+   classes survive. */
+@source "../node_modules/@breadcoop/ui/dist/**/*.{js,mjs}";
+/* The scanner doesn't reliably pull arbitrary values containing `#` out of the
+   minified kit, so force-generate the neo-brutalist button shadow/press classes. */
+@source inline("{,active:}shadow-[0.25rem_0.25rem_0px_0px_#595959] {,active:}shadow-[0.125rem_0.125rem_0px_0px_#595959] active:shadow-[0px_0px_0px_0px_#595959] active:translate-x-{1,0.5} active:translate-y-{1,0.5}");
+
 /* Neo-brutalist card in the bread-ui-kit design language: square corners,
    ink border, hard offset shadow. */
 @utility bread-card {

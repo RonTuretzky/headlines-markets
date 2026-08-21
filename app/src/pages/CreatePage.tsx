@@ -526,6 +526,10 @@ export function CreatePage() {
             <Button data-testid="create-next" disabled={!canContinue} onClick={() => setStep((s) => s + 1)}>
               Continue
             </Button>
+          ) : !wallet.connected ? (
+            <Button data-testid="create-connect" onClick={() => wallet.connect().catch((e) => setError(explain(e)))}>
+              Connect wallet to create
+            </Button>
           ) : (
             <Button
               data-testid="create-submit"
