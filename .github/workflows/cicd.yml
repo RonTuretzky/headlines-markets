@@ -2,7 +2,8 @@
 # and deploy script/DeployGnosis.s.sol with Blockscout verification when deploy-on-pr
 # is enabled. Requires repo secrets:
 #   PRIVATE_KEY — deployer key (use a dedicated deployer, never a funded personal key)
-#   RPC_URL     — https://rpc.gnosischain.com
+#   RPC_URL     — https://ethereum-sepolia-rpc.publicnode.com (PR deploys target Sepolia;
+#                 the Gnosis mainnet deploy is manual — see README)
 name: CI/CD
 on: [push, pull_request]
 
@@ -20,7 +21,7 @@ jobs:
     with:
       package-manager: pnpm
       deploy-on-pr: true
-      deploy-script: "script/DeployGnosis.s.sol:DeployGnosis"
+      deploy-script: "script/DeploySepolia.s.sol:DeploySepolia"
       # forge test in CI: the ffi-based RSA/differential tests need node — provided
       # by the workflow's node setup (node-version default 22)
       contract-paths: "contracts/src/** contracts/script/** contracts/test/** contracts/foundry.toml"

@@ -1,16 +1,29 @@
 #!/usr/bin/env node
-// Verify the Gnosis deployment on Blockscout via the v2 standard-input API.
-//   node script/verify-blockscout.mjs   (run from contracts/, after forge build)
+// Verify a deployment on its Blockscout instance via the v2 standard-input API.
+//   node script/verify-blockscout.mjs [gnosis|sepolia]   (run from contracts/, after forge build)
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 
-const BLOCKSCOUT = "https://gnosisscan.io";
-const d = JSON.parse(readFileSync("deployments/gnosis.json", "utf8"));
-const RPC = "https://rpc.gnosischain.com";
+const NETWORKS = {
+  gnosis: { blockscout: "https://gnosisscan.io", rpc: "https://rpc.gnosischain.com", testUsdc: false },
+  sepolia: {
+    blockscout: "https://eth-sepolia.blockscout.com",
+    rpc: "https://ethereum-sepolia-rpc.publicnode.com",
+    testUsdc: true, // usdc slot is our own TestUSDC — verify it too
+  },
+};
+
+const network = process.argv[2] ?? "gnosis";
+const net = NETWORKS[network];
+if (!net) {
+  console.error(`unknown network "${network}" — expected one of: ${Object.keys(NETWORKS).join(", ")}`);
+  process.exit(1);
+}
+const d = JSON.parse(readFileSync(`deployments/${network}.json`, "utf8"));
 
 const cast = (...a) => execFileSync("cast", a).toString().trim();
-const mktImpl = cast("call", "--rpc-url", RPC, d.factory, "marketImplementation()(address)");
-const fpmmImpl = cast("call", "--rpc-url", RPC, d.factory, "fpmmImplementation()(address)");
+const mktImpl = cast("call", "--rpc-url", net.rpc, d.factory, "marketImplementation()(address)");
+const fpmmImpl = cast("call", "--rpc-url", net.rpc, d.factory, "fpmmImplementation()(address)");
 
 const targets = [
   { addr: d.conditionalTokens, path: "src/tokens/ConditionalTokens.sol", name: "ConditionalTokens", args: "" },
@@ -30,6 +43,9 @@ const targets = [
     args: cast("abi-encode", "c(address,address,address,address)", d.conditionalTokens, d.verifier, mktImpl, fpmmImpl),
   },
 ];
+if (net.testUsdc) {
+  targets.push({ addr: d.usdc, path: "src/tokens/TestUSDC.sol", name: "TestUSDC", args: "" });
+}
 
 for (const t of targets) {
   const stdJson = execFileSync("forge", ["verify-contract", "--show-standard-json-input", t.addr, `${t.path}:${t.name}`]).toString();
@@ -45,17 +61,17 @@ for (const t of targets) {
     fd.append("autodetect_constructor_args", "true");
   }
   fd.append("files[0]", new Blob([stdJson], { type: "application/json" }), "standard_input.json");
-  const r = await fetch(`${BLOCKSCOUT}/api/v2/smart-contracts/${t.addr}/verification/via/standard-input`, {
+  const r = await fetch(`${net.blockscout}/api/v2/smart-contracts/${t.addr}/verification/via/standard-input`, {
     method: "POST",
     body: fd,
   });
   console.log(`${t.name} @ ${t.addr}: ${r.status} ${(await r.text()).slice(0, 120)}`);
 }
 
-// poll a couple of them for final status
+// poll for final status
 await new Promise((r) => setTimeout(r, 20000));
 for (const t of targets) {
-  const r = await fetch(`${BLOCKSCOUT}/api/v2/smart-contracts/${t.addr}`);
+  const r = await fetch(`${net.blockscout}/api/v2/smart-contracts/${t.addr}`);
   const j = await r.json().catch(() => ({}));
   console.log(`${t.name}: verified=${j.is_verified ?? j.is_fully_verified ?? false}`);
 }

@@ -4,6 +4,7 @@ import { Button, Heading1 } from "@breadcoop/ui";
 import { MarketCard } from "../components/MarketCard";
 import { MarketCardSkeleton } from "../components/Skeleton";
 import { Resolution, useMarkets } from "../hooks/useMarkets";
+import { CATEGORIES, parseCategory, type Category } from "../data/categories";
 
 type Sort = "newest" | "volume" | "liquidity" | "ending";
 type Filter = "all" | "live" | "resolved";
@@ -12,6 +13,7 @@ export function MarketsPage() {
   const { data: markets, isLoading, error } = useMarkets();
   const [sort, setSort] = useState<Sort>("newest");
   const [filter, setFilter] = useState<Filter>("all");
+  const [cat, setCat] = useState<Category | "all">("all");
   const [q, setQ] = useState("");
 
   const shown = useMemo(() => {
@@ -19,6 +21,7 @@ export function MarketsPage() {
     let list = [...markets];
     if (filter === "live") list = list.filter((m) => m.resolution === Resolution.Unresolved);
     if (filter === "resolved") list = list.filter((m) => m.resolution !== Resolution.Unresolved);
+    if (cat !== "all") list = list.filter((m) => parseCategory(m.description) === cat);
     if (q.trim()) {
       const needle = q.toLowerCase();
       list = list.filter(
@@ -34,7 +37,7 @@ export function MarketsPage() {
       ending: (a, b) => Number(a.deadline - b.deadline),
     };
     return list.sort(cmp[sort]);
-  }, [markets, sort, filter, q]);
+  }, [markets, sort, filter, cat, q]);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
@@ -50,6 +53,21 @@ export function MarketsPage() {
         <Link to="/create">
           <Button data-testid="nav-create">Create market</Button>
         </Link>
+      </div>
+
+      <div className="mb-3 flex flex-wrap gap-1.5" data-testid="category-tabs">
+        {(["all", ...CATEGORIES] as const).map((c) => (
+          <button
+            key={c}
+            data-testid={`cat-${c}`}
+            onClick={() => setCat(c as Category | "all")}
+            className={`border-2 px-2.5 py-1 text-sm font-bold uppercase ${
+              cat === c ? "border-core-orange bg-[#FBDED1] text-core-orange" : "border-surface-ink bg-paper-0"
+            }`}
+          >
+            {c === "all" ? "All" : c}
+          </button>
+        ))}
       </div>
 
       <div className="mb-4 flex flex-wrap items-center gap-2">

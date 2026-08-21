@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { parseAbiItem, type Hex } from "viem";
-import { deployment } from "../contracts/gen";
+import { deployment, DEPLOY_BLOCK } from "../config";
 import { publicClient } from "../lib/wallet";
 
 const registeredEvent = parseAbiItem(
@@ -23,7 +23,7 @@ export function useDkimKeys() {
       const logs = await publicClient.getLogs({
         address: deployment.dkimRegistry as Hex,
         event: registeredEvent,
-        fromBlock: 0n,
+        fromBlock: DEPLOY_BLOCK,
       });
       return logs.map((l) => ({
         domain: l.args.domainName as string,

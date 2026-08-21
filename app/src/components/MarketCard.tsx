@@ -14,6 +14,7 @@ export function statusBadge(m: MarketData): { label: string; className: string }
 export function MarketCard({ m }: { m: MarketData }) {
   const badge = statusBadge(m);
   const { data: history } = usePriceHistory(m);
+  const noLiquidity = m.lpSupply === 0n && m.resolution === Resolution.Unresolved;
   const chance =
     m.resolution === Resolution.Yes ? 100 : m.resolution === Resolution.No ? 0 : Math.round(Number(m.priceYes) / 1e16);
 
@@ -32,18 +33,22 @@ export function MarketCard({ m }: { m: MarketData }) {
         {/* hero: % chance + sparkline */}
         <div className="mb-3 flex items-end justify-between">
           <div>
-            <div className="font-breadDisplay text-3xl font-black leading-none text-system-green">{chance}%</div>
-            <div className="text-caption font-bold uppercase text-surface-grey-2">chance</div>
+            <div className="font-breadDisplay text-3xl font-black leading-none text-system-green">
+              {noLiquidity ? "—" : `${chance}%`}
+            </div>
+            <div className="text-caption font-bold uppercase text-surface-grey-2">
+              {noLiquidity ? "needs liquidity" : "chance"}
+            </div>
           </div>
           <Sparkline points={history?.points ?? []} />
         </div>
 
         <div className="mb-3 flex gap-2">
           <div className="flex-1 border-2 border-system-green bg-[#eaf7e4] px-2 py-1.5 text-center">
-            <span className="text-sm font-black text-system-green">Yes {fmtCents(m.priceYes)}</span>
+            <span className="text-sm font-black text-system-green">Yes {noLiquidity ? "—" : fmtCents(m.priceYes)}</span>
           </div>
           <div className="flex-1 border-2 border-system-red bg-red-0 px-2 py-1.5 text-center">
-            <span className="text-sm font-black text-system-red">No {fmtCents(m.priceNo)}</span>
+            <span className="text-sm font-black text-system-red">No {noLiquidity ? "—" : fmtCents(m.priceNo)}</span>
           </div>
         </div>
 

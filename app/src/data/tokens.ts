@@ -1,8 +1,8 @@
 import type { Address } from "viem";
 
 // Collateral tokens offered per chain. Markets can use any ERC-20; these are the
-// curated choices the create wizard exposes. Local uses the faucet TestUSDC; Gnosis
-// uses real, onchain-verified stablecoins.
+// curated choices the create wizard exposes. Local + Sepolia use the faucet
+// TestUSDC; Gnosis uses real, onchain-verified stablecoins.
 export interface TokenInfo {
   symbol: string;
   address: Address;
@@ -20,8 +20,10 @@ export const GNOSIS_TOKENS: TokenInfo[] = [
   { symbol: "EURe", address: "0x420CA0f9B9b604cE0fd9C18EF134C705e5Fa3430", decimals: 18, note: "Monerium EUR (euro stablecoin)" },
 ];
 
-/** Collateral options for a chain. `usdcAddress` is the default/local faucet token. */
+/** Collateral options for a chain. `usdcAddress` is the deployment's default/faucet token. */
 export function tokensForChain(chainId: number, usdcAddress: Address): TokenInfo[] {
   if (chainId === 100) return GNOSIS_TOKENS;
+  if (chainId === 11155111)
+    return [{ symbol: "USDC", address: usdcAddress, decimals: 6, faucet: true, note: "Sepolia test USDC — free from the header faucet" }];
   return [{ symbol: "USDC", address: usdcAddress, decimals: 6, faucet: true, note: "Test USDC (faucet)" }];
 }

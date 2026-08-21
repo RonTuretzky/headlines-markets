@@ -10,6 +10,7 @@ on:
       - "app/**"
       - "contracts/src/**"
       - "contracts/deployments/gnosis.json"
+      - "contracts/deployments/sepolia.json"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 

@@ -8,6 +8,9 @@ dependencies:
   '@breadcoop/ui':
     specifier: ^2.0.4
     version: 2.0.4(@phosphor-icons/react@2.1.10)(@privy-io/react-auth@3.37.1)(@rainbow-me/rainbowkit@2.2.11)(@tanstack/react-query@5.101.4)(@types/react-dom@18.3.7)(@types/react@18.3.31)(react-dom@18.3.1)(react@18.3.1)(viem@2.55.13)(wagmi@2.19.5)
+  '@mlc-ai/web-llm':
+    specifier: 0.2.84
+    version: 0.2.84
   '@phosphor-icons/react':
     specifier: ^2.1.7
     version: 2.1.10(react-dom@18.3.1)(react@18.3.1)
@@ -1263,6 +1266,12 @@ packages:
       uuid: 9.0.1
     transitivePeerDependencies:
       - supports-color
+    dev: false
+
+  /@mlc-ai/web-llm@0.2.84:
+    resolution: {integrity: sha512-hrOWzK4/nGNmgoRKT8pgVmZZ2oEPpbblIWQOwpqNyvK2dysHw3KVB1gNJOuRcQfKOPhucEhX1NJzXzgMDnwSCQ==}
+    dependencies:
+      loglevel: 1.9.2
     dev: false
 
   /@msgpack/msgpack@3.1.2:
@@ -6950,6 +6959,11 @@ packages:
 
   /lodash@4.18.1:
     resolution: {integrity: sha512-dMInicTPVE8d1e5otfwmmjlxkZoUpiVLwyeTdUsi/Caj/gfzzblBcCE5sRHV/AsjuCmxWrte2TNGSYuCeCq+0Q==}
+    dev: false
+
+  /loglevel@1.9.2:
+    resolution: {integrity: sha512-HgMmCqIJSAKqo68l0rS2AanEWfkxaZ5wNiEFb5ggm08lDs9Xl2KxBlX3PTcaD2chBM1gXAYf491/M2Rv8Jwayg==}
+    engines: {node: '>= 0.6.0'}
     dev: false
 
   /logplease@1.2.15:

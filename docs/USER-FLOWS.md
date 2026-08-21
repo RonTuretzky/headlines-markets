@@ -91,12 +91,30 @@ actions), LP rows with claimable fees, headline totals for position value and ca
 - **Gnosis mainnet**: **Connect wallet** (injected — MetaMask/Rabby; auto-switches to
   chain 100). Collateral comes from the create wizard's stablecoin selector
   (WXDAI / USDC / USDC.e / sDAI / EURe).
+- **Sepolia testnet**: pick *Sepolia* in the header's network switcher (persists in
+  `localStorage`, reloads). Injected wallet + free Sepolia ETH; collateral is the
+  deployed faucet TestUSDC (**Faucet +$10k** appears in the header once connected).
 
-## 9. Condition authoring (plain words vs regex)
+## 9. Condition authoring (plain words, regex, or AI)
 
-The condition step has two modes:
+The condition step has three modes:
 - **Plain words** (default): add headline phrases (“Fed cuts rates”, “rate cut”) — the
   market matches an email containing **any** of them, case-insensitive with flexible
   spacing. The generated pattern is shown and always compiles onchain.
 - **Advanced**: write the raw regex in the RegexLib subset, with the same live tester.
+- **AI (describe it)**: type the condition in plain English (plus optional example
+  headlines marked *matches* / *no match*). An LLM running **entirely in the browser** —
+  Chrome's built-in model when available, otherwise WebLLM (Qwen2.5-Coder on WebGPU,
+  weights downloaded once and cached) — writes a long permissive regex. Every candidate
+  is linted against the onchain subset, compiled, and checked against the examples;
+  failures are fed back to the model for up to three repair rounds. Nothing leaves the
+  device.
 Switching modes preserves the condition when the pattern is a simple phrase list.
+
+## 10. Categories
+
+Markets carry an optional Polymarket-style category (Politics, World, Economy, Crypto,
+Sports, Culture, Science, Business), chosen in the wizard's first step. The deployed
+contracts have no category field, so it rides as a `[category:x]` tag inside the
+description — parsed back out for the markets-page filter tabs and the Rules panel,
+stripped everywhere the description is displayed.

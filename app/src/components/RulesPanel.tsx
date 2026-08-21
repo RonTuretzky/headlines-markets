@@ -1,4 +1,5 @@
 import { type MarketData, ContentField } from "../hooks/useMarkets";
+import { parseCategory, stripCategoryTag } from "../data/categories";
 import { fmtDate } from "../lib/format";
 
 const FIELD_LABEL: Record<ContentField, string> = {
@@ -9,11 +10,18 @@ const FIELD_LABEL: Record<ContentField, string> = {
 
 /** Polymarket's "Rules" section: verbatim resolution criteria + resolver transparency. */
 export function RulesPanel({ m }: { m: MarketData }) {
+  const category = parseCategory(m.description);
   return (
     <div data-testid="rules-panel">
-      <p className="mb-3 whitespace-pre-wrap text-sm">{m.description}</p>
+      <p className="mb-3 whitespace-pre-wrap text-sm">{stripCategoryTag(m.description)}</p>
 
       <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-sm">
+        {category && (
+          <>
+            <span className="text-surface-grey-2">Category</span>
+            <span className="font-bold">{category}</span>
+          </>
+        )}
         <span className="text-surface-grey-2">Condition</span>
         <span>
           <code className="bg-paper-1 px-1 py-0.5 font-mono text-caption">{m.contentRegex || "(per-source)"}</code>{" "}

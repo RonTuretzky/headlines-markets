@@ -8,6 +8,8 @@ import { NEWSPAPERS } from "../data/newspapers";
 import { tokensForChain, type TokenInfo } from "../data/tokens";
 import { CHAIN_ID } from "../config";
 import { KeywordBuilder, phrasesToRegex, regexToPhrases } from "../components/KeywordBuilder";
+import { AIRegexPanel } from "../components/AIRegexPanel";
+import { CATEGORIES, withCategoryTag, type Category } from "../data/categories";
 import { ContentField, FACTORY, USDC, useCash } from "../hooks/useMarkets";
 import { parseAmount } from "../lib/format";
 import { publicClient, useWallet } from "../lib/wallet";
@@ -30,12 +32,13 @@ export function CreatePage() {
   const [step, setStep] = useState(0);
   const [question, setQuestion] = useState("");
   const [description, setDescription] = useState("");
+  const [category, setCategory] = useState<Category | null>(null);
   const [sources, setSources] = useState<SourceDraft[]>([
     { ...NEWSPAPERS[0], contentRegex: "" },
     { ...NEWSPAPERS[1], contentRegex: "" },
   ]);
   const [threshold, setThreshold] = useState(2);
-  const [regexMode, setRegexMode] = useState<"simple" | "advanced">("simple");
+  const [regexMode, setRegexMode] = useState<"simple" | "advanced" | "ai">("simple");
   const [phrases, setPhrases] = useState<string[]>([]);
   const [contentRegex, setContentRegex] = useState("");
   const [contentField, setContentField] = useState<ContentField>(ContentField.SubjectOrBody);
@@ -54,7 +57,7 @@ export function CreatePage() {
     setPhrases(next);
     setContentRegex(phrasesToRegex(next));
   };
-  const switchMode = (mode: "simple" | "advanced") => {
+  const switchMode = (mode: "simple" | "advanced" | "ai") => {
     if (mode === "simple") {
       // best-effort: recover phrases from a simple alternation pattern
       const recovered = regexToPhrases(contentRegex);
@@ -132,14 +135,16 @@ export function CreatePage() {
 
       const params = {
         question: question.trim(),
-        description:
+        description: withCategoryTag(
           description.trim() ||
-          `Resolves YES if at least ${threshold} of ${sources.length} configured newspapers send a` +
-            ` breaking-news alert email matching /${contentRegex}/ on the` +
-            ` ${contentField === ContentField.Subject ? "subject" : contentField === ContentField.Body ? "body" : "subject or body"},` +
-            ` dated before the deadline. Settled permissionlessly by a real DKIM signature verified onchain;` +
-            ` resolves NO` +
-            ` ${bufferHours}h after the deadline if the threshold is not met.`,
+            `Resolves YES if at least ${threshold} of ${sources.length} configured newspapers send a` +
+              ` breaking-news alert email matching /${contentRegex}/ on the` +
+              ` ${contentField === ContentField.Subject ? "subject" : contentField === ContentField.Body ? "body" : "subject or body"},` +
+              ` dated before the deadline. Settled permissionlessly by a real DKIM signature verified onchain;` +
+              ` resolves NO` +
+              ` ${bufferHours}h after the deadline if the threshold is not met.`,
+          category,
+        ),
         contentRegex,
         contentField,
         sources: sources.map((s) => ({
@@ -227,6 +232,23 @@ export function CreatePage() {
                 onChange={(e) => setDescription(e.target.value)}
                 className="w-full border-2 border-surface-ink bg-paper-0 px-3 py-2 outline-none focus:border-core-orange"
               />
+            </div>
+            <div>
+              <label className="text-caption font-bold uppercase text-surface-grey-2">Category (optional)</label>
+              <div className="mt-1 flex flex-wrap gap-1.5" data-testid="create-category">
+                {CATEGORIES.map((c) => (
+                  <button
+                    key={c}
+                    data-testid={`category-${c}`}
+                    onClick={() => setCategory((cur) => (cur === c ? null : c))}
+                    className={`border-2 px-2.5 py-1 text-sm font-bold ${
+                      category === c ? "border-core-orange bg-[#FBDED1]" : "border-surface-ink bg-paper-0"
+                    }`}
+                  >
+                    {c}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         )}
@@ -330,6 +352,15 @@ export function CreatePage() {
               >
                 Advanced (regex)
               </button>
+              <button
+                data-testid="mode-ai"
+                onClick={() => switchMode("ai")}
+                className={`flex-1 px-3 py-2 font-breadDisplay font-bold uppercase ${
+                  regexMode === "ai" ? "bg-surface-ink text-paper-0" : "bg-paper-0"
+                }`}
+              >
+                AI (describe it)
+              </button>
             </div>
 
             {regexMode === "simple" ? (
@@ -342,6 +373,8 @@ export function CreatePage() {
                   </p>
                 )}
               </>
+            ) : regexMode === "ai" ? (
+              <AIRegexPanel currentRegex={contentRegex} onGenerated={setContentRegex} />
             ) : (
               <div>
                 <label className="text-caption font-bold uppercase text-surface-grey-2">Content regex</label>

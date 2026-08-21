@@ -65,13 +65,36 @@ Deployed 2026-08-21, **all contracts verified** on [gnosisscan.io](https://gnosi
   `PRIVATE_KEY` + `RPC_URL`). `contracts/script/verify-blockscout.mjs` re-verifies a
   manual deploy.
 
+## Also live on Sepolia testnet (chain 11155111)
+
+Same stack, free to try: faucet **TestUSDC** collateral, the demo DKIM key **and the real
+NYT key** registered, and two seeded markets (the Fed-cut market settles with the sample
+`.eml` fixtures). Switch networks from the header dropdown on the live app — the static
+bundle embeds every deployment and picks via `localStorage`.
+
+All contracts verified on [eth-sepolia.blockscout.com](https://eth-sepolia.blockscout.com):
+
+| Contract | Address |
+|---|---|
+| MarketFactory | [`0x534bf057b115Ca133C982f42acDB3Fc8fe8B3b4b`](https://eth-sepolia.blockscout.com/address/0x534bf057b115Ca133C982f42acDB3Fc8fe8B3b4b) |
+| ConditionalTokens | [`0x583f520E35BDA4caFeEa7d7a3b2f358d838789a5`](https://eth-sepolia.blockscout.com/address/0x583f520E35BDA4caFeEa7d7a3b2f358d838789a5) |
+| DKIMRegistry | [`0xE8803065fA3eAa9aE82A839028a09535799e2ff7`](https://eth-sepolia.blockscout.com/address/0xE8803065fA3eAa9aE82A839028a09535799e2ff7) |
+| DKIMVerifier | [`0x9fb26E84e98030bFc523ae60f5660B3287aEF2dB`](https://eth-sepolia.blockscout.com/address/0x9fb26E84e98030bFc523ae60f5660B3287aEF2dB) |
+| TestUSDC (faucet) | [`0x0A29a562a2141b3bB209bDa1F53A1fC65DAB0742`](https://eth-sepolia.blockscout.com/address/0x0A29a562a2141b3bB209bDa1F53A1fC65DAB0742) |
+
+Deploy your own: `node ../app/scripts/dkim-keys.mjs && forge script
+script/DeploySepolia.s.sol:DeploySepolia --rpc-url $RPC --broadcast --private-key $PK`,
+then `node script/verify-blockscout.mjs sepolia`. CI (`cicd.yml`) deploys this script on
+PRs via etherform with the repo's `PRIVATE_KEY`/`RPC_URL` secrets (Sepolia); the Gnosis
+mainnet deploy stays manual.
+
 ## See it in action
 
 **Browse & trade** — market cards with live sparklines, a price-history chart with crosshair, and the Polymarket-style buy widget ("To win $X").
 
 ![browse and trade](docs/assets/browse-and-trade.gif)
 
-**Open a market, permissionlessly** — pick newspapers, write a regex with the live tester, set odds and liquidity.
+**Open a market, permissionlessly** — pick newspapers and a Polymarket-style category, then write the condition three ways: **plain words**, raw **regex**, or **AI** — describe the condition in English and an LLM running entirely in your browser (Chrome's built-in model, else WebLLM on WebGPU) writes a long subset-safe regex, lint-checked, compiled and tested against your example headlines before it's accepted.
 
 ![create a market](docs/assets/create-market.gif)
 

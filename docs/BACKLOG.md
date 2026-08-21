@@ -46,7 +46,7 @@ Legend: **P0** = needed for any real deployment · **P1** = trading-experience p
 | D2 **P1** | **Real wallets** | RainbowKit/Privy via bread-ui-kit's `BreadUIKitProvider`/`LoginButton`/`Navbar` (the kit ships these; we currently use dev accounts). |
 | D3 **P1** | **Portfolio depth** | Avg entry / Return (realized+unrealized) columns, history tab (Buy/Sell/Redeem/Split/Merge), P&L period filters, auto-redeem toggle. |
 | D4 **P1** | **Resolution timeline UI** | Polymarket-style labeled timeline ("Proof 1/2 accepted → threshold reached → finalized"), plus an "email inbox" view rendering each accepted alert. |
-| D5 **P2** | **Discovery** | Categories/tags, trending sort by 24h volume, comments, watchlists, embeds. |
+| D5 **P2** | **Discovery** | ◑ *Categories shipped* (Polymarket-style category tags + filter tabs, stored as a description tag). Remaining: trending sort by 24h volume, comments, watchlists, embeds. |
 | D6 **P2** | **Notifications** | Push/email when a tracked market gets a proof, resolves, or nears deadline. |
 | D7 **P2** | **Settlement bot** | Reference daemon: IMAP-watch a mailbox subscribed to the alert lists (docs/NEWSPAPERS.md), auto-prove + auto-submit matching emails. Turns "permissionless" into "automatic". |
 
@@ -57,4 +57,4 @@ Legend: **P0** = needed for any real deployment · **P1** = trading-experience p
 | E1 **P0** | **Gas reality pass** | ✅ *Done*: settle = 329k gas with the real Groth16 verify (126k mock fallback) vs 2-5.7M transparent; markets/FPMMs are **EIP-1167 clones** (createMarket 1.81M vs ~5M+, implementations deployed once); every contract under EIP-170; evidence event-only on the compiled path; vanilla anvil, no flags. |
 | E2 **P0** | **Audit + invariant/fuzz suite** | The FPMM fee accounting and RegexLib parser are the two components most deserving adversarial review; add Foundry invariant campaigns (collateral conservation under random trade/fund/settle sequences). |
 | E3 **P1** | **Indexer** | Subgraph/ponder for markets, trades, positions, volume — replaces the frontend's from-genesis log scans (fine on anvil, not on a real chain). |
-| E4 **P2** | **Testnet + real-email dry run** | Deploy to a testnet, subscribe to the WaPo/CNN alert lists, settle a real market with a real breaking-news email through the real zkEmail prover — the full-fidelity rehearsal. |
+| E4 **P2** | **Testnet + real-email dry run** | ◑ *Sepolia deployed + verified* (faucet TestUSDC, seeded markets, real NYT key; CI deploys per PR). Remaining: subscribe to the alert lists and settle a market with a real breaking-news email end to end. |

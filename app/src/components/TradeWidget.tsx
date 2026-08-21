@@ -169,6 +169,18 @@ export function TradeWidget({ m }: { m: MarketData }) {
     );
   }
 
+  if (m.lpSupply === 0n) {
+    return (
+      <div className="bread-card p-4" data-testid="trade-widget">
+        <h3 className="font-breadDisplay text-lg font-bold">No liquidity yet</h3>
+        <p className="text-sm text-surface-grey-2">
+          This market exists onchain but its pool is empty, so trades can't be priced yet. Be the first LP —
+          add funding in the Liquidity panel (you set the opening odds) and trading opens instantly.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="bread-card p-4" data-testid="trade-widget">
       <div className="mb-3 flex border-2 border-surface-ink">

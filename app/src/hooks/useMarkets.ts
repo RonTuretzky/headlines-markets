@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import type { Address, Hex } from "viem";
 import { parseAbiItem } from "viem";
-import { abis, deployment } from "../contracts/gen";
+import { abis } from "../contracts/gen";
+import { deployment, DEPLOY_BLOCK } from "../config";
 import { publicClient } from "../lib/wallet";
 
 export const FACTORY = deployment.factory as Address;
@@ -172,8 +173,8 @@ async function fetchMarket(id: number, market: Address, fpmm: Address): Promise<
   })) as unknown as boolean[];
 
   const [buys, sells, block] = await Promise.all([
-    publicClient.getLogs({ address: fpmm, event: buyEvent, fromBlock: 0n }),
-    publicClient.getLogs({ address: fpmm, event: sellEvent, fromBlock: 0n }),
+    publicClient.getLogs({ address: fpmm, event: buyEvent, fromBlock: DEPLOY_BLOCK }),
+    publicClient.getLogs({ address: fpmm, event: sellEvent, fromBlock: DEPLOY_BLOCK }),
     publicClient.getBlock(),
   ]);
   const volume =

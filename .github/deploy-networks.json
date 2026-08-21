@@ -1,6 +1,12 @@
 {
   "testnets": [
     {
+      "name": "sepolia",
+      "chain_id": 11155111,
+      "blockscout_url": "https://eth-sepolia.blockscout.com",
+      "environment": "testnet"
+    },
+    {
       "name": "gnosis",
       "chain_id": 100,
       "blockscout_url": "https://gnosisscan.io",

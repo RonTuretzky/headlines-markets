@@ -1,12 +1,73 @@
 import { defineChain, type Address } from "viem";
-import { gnosis } from "viem/chains";
-import { deployment } from "./contracts/gen";
+import { gnosis, sepolia } from "viem/chains";
+import { defaultNetwork, deployments } from "./contracts/gen";
+
+// ---------------------------------------------------------------------------
+// Runtime network selection. The build embeds every real-network deployment
+// (gnosis, sepolia) plus the DEPLOYMENT-selected default (local during dev).
+// On a real-network build the user can switch networks from the header; the
+// choice persists in localStorage and takes effect on reload (all config here
+// is resolved once, at module init).
+// ---------------------------------------------------------------------------
+
+// Plain strings (not a literal union): which networks are embedded varies per
+// build (local dev embeds "local"; the Pages build embeds gnosis+sepolia).
+export type NetworkName = string;
+
+const STORAGE_KEY = "mop-network";
+
+export const AVAILABLE_NETWORKS: NetworkName[] = Object.keys(deployments);
+
+function pickNetwork(): NetworkName {
+  const def: string = defaultNetwork;
+  // Local dev builds always target the local anvil deployment.
+  if (def === "local") return "local";
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored && stored !== "local" && stored in deployments) return stored;
+  } catch {
+    /* SSR / privacy mode */
+  }
+  return def;
+}
+
+export const NETWORK: NetworkName = pickNetwork();
+
+/** Switch the app to another embedded deployment (persists, then reloads). */
+export function setNetwork(name: NetworkName) {
+  try {
+    localStorage.setItem(STORAGE_KEY, name);
+  } catch {
+    /* ignore */
+  }
+  location.reload();
+}
+
+export const deployment = deployments[NETWORK as keyof typeof deployments] as {
+  chainId: number;
+  factory: string;
+  conditionalTokens: string;
+  usdc: string;
+  dkimRegistry: string;
+  verifier: string;
+  multicall3: string;
+  deployBlock?: number;
+};
 
 export const CHAIN_ID = deployment.chainId as number;
 export const IS_LOCAL = CHAIN_ID === 31337;
+/** Public testnet: real chain + injected wallet, but faucet collateral. */
+export const IS_TESTNET = CHAIN_ID === 11155111;
 
-const DEFAULT_RPC = IS_LOCAL ? "http://localhost:8547" : "https://rpc.gnosischain.com";
-export const RPC_URL = (import.meta.env.VITE_RPC_URL as string | undefined) ?? DEFAULT_RPC;
+/** First block to scan for our contracts' logs (0 where the deployment predates the field). */
+export const DEPLOY_BLOCK = BigInt(deployment.deployBlock ?? 0);
+
+const DEFAULT_RPCS: Record<number, string> = {
+  31337: "http://localhost:8547",
+  100: "https://rpc.gnosischain.com",
+  11155111: "https://ethereum-sepolia-rpc.publicnode.com",
+};
+export const RPC_URL = (import.meta.env.VITE_RPC_URL as string | undefined) ?? DEFAULT_RPCS[CHAIN_ID];
 
 const localChain = defineChain({
   id: 31337,
@@ -16,15 +77,19 @@ const localChain = defineChain({
   contracts: { multicall3: { address: deployment.multicall3 as Address } },
 });
 
-const gnosisChain = defineChain({
-  ...gnosis,
-  rpcUrls: { default: { http: [RPC_URL] } },
-});
+const gnosisChain = defineChain({ ...gnosis, rpcUrls: { default: { http: [RPC_URL] } } });
+const sepoliaChain = defineChain({ ...sepolia, rpcUrls: { default: { http: [RPC_URL] } } });
 
-/** The chain the deployed contracts live on (picked from deployments/*.json chainId). */
-export const chain = IS_LOCAL ? localChain : gnosisChain;
+/** The chain the selected deployment lives on. */
+export const chain = IS_LOCAL ? localChain : IS_TESTNET ? sepoliaChain : gnosisChain;
 
-export const EXPLORER_URL = IS_LOCAL ? null : "https://gnosisscan.io";
+export const CHAIN_LABEL = IS_LOCAL ? "Local" : IS_TESTNET ? "Sepolia" : "Gnosis";
+
+export const EXPLORER_URL = IS_LOCAL
+  ? null
+  : IS_TESTNET
+    ? "https://eth-sepolia.blockscout.com"
+    : "https://gnosisscan.io";
 
 /// Anvil's canonical, publicly-known dev accounts (local only; never on a real network).
 export const DEV_ACCOUNTS = [
