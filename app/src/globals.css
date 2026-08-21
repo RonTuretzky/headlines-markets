@@ -7,9 +7,22 @@
    Buttons render unstyled. Register the kit's dist as a content source so all its
    classes survive. */
 @source "../node_modules/@breadcoop/ui/dist/**/*.{js,mjs}";
-/* The scanner doesn't reliably pull arbitrary values containing `#` out of the
-   minified kit, so force-generate the neo-brutalist button shadow/press classes. */
-@source inline("{,active:}shadow-[0.25rem_0.25rem_0px_0px_#595959] {,active:}shadow-[0.125rem_0.125rem_0px_0px_#595959] active:shadow-[0px_0px_0px_0px_#595959] active:translate-x-{1,0.5} active:translate-y-{1,0.5}");
+@source inline("active:translate-x-{1,0.5} active:translate-y-{1,0.5}");
+
+/* bread-ui-kit's neo-brutalist button drop-shadow uses an arbitrary #-valued
+   box-shadow that Tailwind v4 composes through CSS vars — those resolve to
+   transparent in the production build. Restore the hard offset shadow (and its
+   flat pressed state) with plain CSS. The `button.` prefix outranks the utility. */
+button.shadow-\[0\.25rem_0\.25rem_0px_0px_\#595959\]:not(:disabled) {
+  box-shadow: 0.25rem 0.25rem 0 0 #595959;
+}
+button.shadow-\[0\.125rem_0\.125rem_0px_0px_\#595959\]:not(:disabled) {
+  box-shadow: 0.125rem 0.125rem 0 0 #595959;
+}
+button.shadow-\[0\.25rem_0\.25rem_0px_0px_\#595959\]:active:not(:disabled),
+button.shadow-\[0\.125rem_0\.125rem_0px_0px_\#595959\]:active:not(:disabled) {
+  box-shadow: 0 0 0 0 #595959;
+}
 
 /* Neo-brutalist card in the bread-ui-kit design language: square corners,
    ink border, hard offset shadow. */
