@@ -65,6 +65,19 @@ Deployed 2026-08-21, **all contracts verified** on [gnosisscan.io](https://gnosi
   `PRIVATE_KEY` + `RPC_URL`). `contracts/script/verify-blockscout.mjs` re-verifies a
   manual deploy.
 
+### The board: Polymarket's top-50, ported
+
+The Gnosis deployment carries **40 live markets ported from Polymarket's top-50 by
+volume** (evaluated 2026-08-21). A multi-agent pipeline judged each market's
+*email-settleability* — would K distinct newspapers near-certainly send a breaking-alert
+email whose subject a RegexLib pattern catches, with no false positives from
+speculation/negation headlines? — then adversarially reviewed every draft regex
+(compile-tested, positive/negative subject fixtures) before creation. ~10 of the top 50
+(Ethiopian PM succession, "aliens confirmed", "Jesus returns", exact-number props) were
+rejected as not email-settleable; the rest are live with `[category:x]` tags and **zero
+initial liquidity** — fund one from its Liquidity panel (you set the opening odds) and
+trading opens. Creation configs: `app/scripts/create-markets.mjs`.
+
 ## Also live on Sepolia testnet (chain 11155111)
 
 Same stack, free to try: faucet **TestUSDC** collateral, the demo DKIM key **and the real

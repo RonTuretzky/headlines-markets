@@ -78,7 +78,7 @@ const sellEvent = parseAbiItem(
 );
 
 
-async function fetchMarket(id: number, market: Address, fpmm: Address): Promise<MarketData> {
+async function fetchMarket(id: number, market: Address, fpmm: Address, chainNow: bigint): Promise<MarketData> {
   const m = { address: market, abi: abis.HeadlineMarket } as const;
   const f = { address: fpmm, abi: abis.FPMM } as const;
 
@@ -172,11 +172,15 @@ async function fetchMarket(id: number, market: Address, fpmm: Address): Promise<
     contracts: sources.map((_, i) => ({ ...m, functionName: "sourceMatched", args: [BigInt(i)] })),
   })) as unknown as boolean[];
 
-  const [buys, sells, block] = await Promise.all([
-    publicClient.getLogs({ address: fpmm, event: buyEvent, fromBlock: DEPLOY_BLOCK }),
-    publicClient.getLogs({ address: fpmm, event: sellEvent, fromBlock: DEPLOY_BLOCK }),
-    publicClient.getBlock(),
-  ]);
+  // An FPMM that has never held liquidity cannot have trades — skip the log scans
+  // (most of the board is 0-liquidity markets; this keeps public-RPC load tiny).
+  const [buys, sells] =
+    lpSupply === 0n && pool[0] === 0n && pool[1] === 0n
+      ? [[], []]
+      : await Promise.all([
+          publicClient.getLogs({ address: fpmm, event: buyEvent, fromBlock: DEPLOY_BLOCK }),
+          publicClient.getLogs({ address: fpmm, event: sellEvent, fromBlock: DEPLOY_BLOCK }),
+        ]);
   const volume =
     buys.reduce((a, l) => a + (l.args.investmentAmount ?? 0n), 0n) +
     sells.reduce((a, l) => a + (l.args.returnAmount ?? 0n), 0n);
@@ -211,21 +215,26 @@ async function fetchMarket(id: number, market: Address, fpmm: Address): Promise<
     poolNo: pool[1],
     lpSupply,
     volume,
-    chainNow: block.timestamp,
+    chainNow,
   };
 }
 
 export function useMarkets() {
   return useQuery({
     queryKey: ["markets"],
-    refetchInterval: 3000,
+    // Dozens of markets on a public RPC: poll gently (writes invalidate instantly anyway).
+    refetchInterval: 12000,
+    staleTime: 4000,
     queryFn: async () => {
-      const records = (await publicClient.readContract({
-        address: FACTORY,
-        abi: abis.MarketFactory,
-        functionName: "getAllMarkets",
-      })) as { market: Address; fpmm: Address }[];
-      return Promise.all(records.map((r, i) => fetchMarket(i, r.market, r.fpmm)));
+      const [records, block] = await Promise.all([
+        publicClient.readContract({
+          address: FACTORY,
+          abi: abis.MarketFactory,
+          functionName: "getAllMarkets",
+        }) as Promise<{ market: Address; fpmm: Address }[]>,
+        publicClient.getBlock(),
+      ]);
+      return Promise.all(records.map((r, i) => fetchMarket(i, r.market, r.fpmm, block.timestamp)));
     },
   });
 }

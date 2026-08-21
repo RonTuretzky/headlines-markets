@@ -16,7 +16,13 @@ import { privateKeyToAccount } from "viem/accounts";
 import { useQueryClient } from "@tanstack/react-query";
 import { chain, DEV_ACCOUNTS, IS_LOCAL, RPC_URL } from "../config";
 
-export const publicClient: PublicClient = createPublicClient({ chain, transport: http(RPC_URL) });
+// JSON-RPC batching (HTTP batch + auto-multicall aggregation) keeps the request
+// count sane with dozens of markets on a public rate-limited RPC.
+export const publicClient: PublicClient = createPublicClient({
+  chain,
+  batch: { multicall: { wait: 16 } },
+  transport: http(RPC_URL, { batch: { batchSize: 20, wait: 16 } }),
+});
 
 type Eip1193 = { request(args: { method: string; params?: unknown[] }): Promise<unknown> };
 const injected = (): Eip1193 | undefined => (globalThis as { ethereum?: Eip1193 }).ethereum;

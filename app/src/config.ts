@@ -64,7 +64,7 @@ export const DEPLOY_BLOCK = BigInt(deployment.deployBlock ?? 0);
 
 const DEFAULT_RPCS: Record<number, string> = {
   31337: "http://localhost:8547",
-  100: "https://rpc.gnosischain.com",
+  100: "https://gnosis-rpc.publicnode.com",
   11155111: "https://ethereum-sepolia-rpc.publicnode.com",
 };
 export const RPC_URL = (import.meta.env.VITE_RPC_URL as string | undefined) ?? DEFAULT_RPCS[CHAIN_ID];

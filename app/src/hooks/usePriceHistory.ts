@@ -37,7 +37,8 @@ const fundingEvent = parseAbiItem("event FundingAdded(address indexed funder, ui
 export function usePriceHistory(m?: MarketData) {
   return useQuery({
     queryKey: ["history", m?.id, m ? String(m.volume) : "", m ? String(m.resolution) : ""],
-    enabled: !!m,
+    // No pool ever → no pool-changing events → nothing to chart (and no RPC spend).
+    enabled: !!m && (m.lpSupply > 0n || m.poolYes > 0n || m.poolNo > 0n || m.volume > 0n),
     staleTime: 10_000,
     queryFn: async () => {
       if (!m) throw new Error("no market");

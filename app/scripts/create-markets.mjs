@@ -20,7 +20,7 @@ if (!configPath || !process.env.PRIVATE_KEY) {
 }
 
 const NETS = {
-  gnosis: { chain: gnosis, rpc: "https://rpc.gnosischain.com", collateral: "0xe91D153E0b41518A2Ce8Dd3D7944Fa863463a97d" /* WXDAI */ },
+  gnosis: { chain: gnosis, rpc: process.env.RPC_OVERRIDE ?? "https://rpc.gnosischain.com", collateral: "0xe91D153E0b41518A2Ce8Dd3D7944Fa863463a97d" /* WXDAI */ },
   sepolia: { chain: sepolia, rpc: "https://ethereum-sepolia-rpc.publicnode.com", collateral: null /* deployment.usdc */ },
 };
 const net = NETS[networkName];
