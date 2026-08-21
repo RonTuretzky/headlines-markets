@@ -40,11 +40,11 @@ export function MarketsPage() {
     <div className="mx-auto max-w-6xl px-4 py-8">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <Heading1>Headlines</Heading1>
+          <Heading1>Markets</Heading1>
           <p className="max-w-2xl text-body text-surface-grey-2">
-            Prediction markets settled by the newspapers themselves. Anyone can open a market over any set of
-            newspapers and any regex; anyone can settle it by submitting a zkEmail proof of a matching
-            breaking-news alert.
+            Settled by the newspapers themselves. Anyone can open a market over any set of newspapers
+            and any headline condition; anyone can settle one by submitting a DKIM-signed
+            breaking-news alert. <Link to="/" className="font-semibold text-core-orange underline">How it works →</Link>
           </p>
         </div>
         <Link to="/create">

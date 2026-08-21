@@ -12,7 +12,7 @@ test.describe.configure({ mode: "serial" });
 const beat = (page: Page, ms = 900) => page.waitForTimeout(ms);
 
 test("browse and trade", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/#/markets");
   await beat(page);
   await page.getByTestId("market-card-0").scrollIntoViewIfNeeded();
   await beat(page);

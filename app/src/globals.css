@@ -109,3 +109,125 @@ main,
     transition-duration: 0.01ms !important;
   }
 }
+
+/* --- Landing-page "How it works" illustrations (mop-* = Means of Prediction).
+   Looping, purely decorative, crowdstake.fun-style; every visual reads
+   correctly at rest and the global prefers-reduced-motion rule disables all. */
+
+/* Headline ticker marquee (list is rendered twice for a seamless wrap). */
+@keyframes mop-ticker {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.mop-ticker { animation: mop-ticker 30s linear infinite; }
+
+/* The market question typing itself out, then holding. */
+@keyframes mop-type {
+  0% { max-width: 0; }
+  35%, 92% { max-width: 16rem; }
+  100% { max-width: 16rem; opacity: 0; }
+}
+.mop-type {
+  overflow: hidden;
+  white-space: nowrap;
+  max-width: 16rem;
+  animation: mop-type 7s steps(26, end) infinite;
+}
+@keyframes mop-caret {
+  0%, 45% { opacity: 1; }
+  50%, 95% { opacity: 0; }
+  100% { opacity: 1; }
+}
+.mop-caret { animation: mop-caret 1s steps(1) infinite; }
+
+/* Newspaper chips lighting up as sources are picked. */
+@keyframes mop-paper {
+  0%, 100% { transform: scale(1); border-color: #1b201a; }
+  50% { transform: scale(1.06); border-color: #ea5817; }
+}
+.mop-paper { animation: mop-paper 2.8s ease-in-out infinite; }
+
+/* Plain-words condition chips breathing. */
+@keyframes mop-word {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+.mop-word { animation: mop-word 2.6s ease-in-out infinite; }
+
+/* Live odds: the YES share of the price bar drifting with the trades. */
+@keyframes mop-odds {
+  0%, 100% { width: 55%; }
+  40% { width: 72%; }
+  70% { width: 63%; }
+}
+.mop-odds { width: 62%; animation: mop-odds 7s ease-in-out infinite; }
+
+/* The YES price ticking through cents (discrete content animation). */
+@keyframes mop-price {
+  0%, 100% { content: "55\00A2"; }
+  20% { content: "61\00A2"; }
+  40% { content: "72\00A2"; }
+  60% { content: "68\00A2"; }
+  80% { content: "63\00A2"; }
+}
+.mop-price-yes::after { content: "55\00A2"; animation: mop-price 7s steps(1) infinite; }
+
+/* Buy-YES card pulsing as orders land. */
+@keyframes mop-buy-pulse {
+  0%, 100% { transform: translate(0, 0); box-shadow: 0.125rem 0.125rem 0 0 #595959; }
+  50% { transform: translate(0.125rem, 0.125rem); box-shadow: 0 0 0 0 #595959; }
+}
+.mop-buy-pulse { animation: mop-buy-pulse 2.4s ease-in-out infinite; }
+
+/* Signed alert emails flying from the newsroom to subscriber inboxes. */
+@keyframes mop-mail {
+  0% { left: 0%; opacity: 0; }
+  15% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { left: 88%; opacity: 0; }
+}
+.mop-mail { animation: mop-mail 2.7s ease-in-out infinite; }
+
+/* Inbox glowing as mail arrives. */
+@keyframes mop-inbox {
+  0%, 55%, 100% { transform: scale(1); }
+  75% { transform: scale(1.06); }
+}
+.mop-inbox { animation: mop-inbox 2.7s ease-in-out infinite; }
+
+/* The onchain verifier scanning the signed headers. */
+@keyframes mop-scan {
+  0% { transform: translateX(-3rem); }
+  60%, 100% { transform: translateX(19rem); }
+}
+.mop-scan { animation: mop-scan 3.2s ease-in-out infinite; }
+
+/* The DKIM seal stamping down. */
+@keyframes mop-seal {
+  0%, 100% { transform: scale(0.97); opacity: 0.75; }
+  55%, 80% { transform: scale(1.03); opacity: 1; }
+}
+.mop-seal { animation: mop-seal 3.2s ease-in-out infinite; }
+
+/* Distinct sources proving out one after another. */
+@keyframes mop-source {
+  0%, 100% { transform: scale(1); border-color: #1b201a; }
+  50% { transform: scale(1.05); border-color: #067c53; }
+}
+.mop-source { animation: mop-source 3.3s ease-in-out infinite; }
+
+/* Resolution banner breathing. */
+@keyframes mop-resolve {
+  0%, 100% { opacity: 0.85; }
+  55% { opacity: 1; }
+}
+.mop-resolve { animation: mop-resolve 3.3s ease-in-out infinite; }
+
+/* Redeemed dollars flowing to the winner. */
+@keyframes mop-coin {
+  0% { left: 0; opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { left: 3.4rem; opacity: 0; }
+}
+.mop-coin { animation: mop-coin 2s ease-in-out infinite; }

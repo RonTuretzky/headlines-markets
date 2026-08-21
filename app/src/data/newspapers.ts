@@ -10,6 +10,13 @@ export interface NewspaperPreset {
 
 export const NEWSPAPERS: NewspaperPreset[] = [
   {
+    name: "Jacobin",
+    dkimDomain: "jacobin.com",
+    fromRegex: "@jacobin\\.com$",
+    verified: false,
+    note: "Newsletters from jacobin.com via Amazon SES + Google Workspace (SPF-verified: amazonses.com + _spf.google.com); DMARC p=none — weakest enforcement of the set, DKIM d=jacobin.com still required",
+  },
+  {
     name: "The New York Times",
     dkimDomain: "nytimes.com",
     // Per-product local-parts: nytdirect@ = breaking alerts, todaysheadlines-noreply@ =

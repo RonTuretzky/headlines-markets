@@ -29,7 +29,7 @@ async function readCash(page: Page): Promise<number> {
 }
 
 test("markets list shows the seeded markets with Polymarket-style pricing", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/#/markets");
   await expect(page.getByTestId("market-card-0")).toContainText("Fed rate cut announced");
   await expect(page.getByTestId("market-card-0")).toContainText("Live");
   await expect(page.getByTestId("market-card-0")).toContainText("50¢"); // equal-odds seed
@@ -48,7 +48,7 @@ test("markets list shows the seeded markets with Polymarket-style pricing", asyn
 });
 
 test("faucet mints cash and the account switcher switches users", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/#/markets");
   const aliceCash = await readCash(page);
   expect(aliceCash).toBeGreaterThan(0);
 
@@ -210,7 +210,7 @@ test("after the deadline anyone can resolve NO", async ({ page }) => {
   await expect(page.getByText("Trading closed")).toBeVisible();
 
   // list reflects the resolution states
-  await page.goto("/");
+  await page.goto("/#/markets");
   await expect(page.getByTestId("market-card-0")).toContainText("Resolved YES");
   await expect(page.getByTestId("market-card-2")).toContainText("Resolved NO");
 });

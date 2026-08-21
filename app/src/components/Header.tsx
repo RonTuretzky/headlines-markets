@@ -46,7 +46,9 @@ export function Header() {
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-3 px-4 py-3">
         <Link to="/" className="flex items-center gap-2">
           <Logo size={30} color="orange" />
-          <span className="font-breadDisplay text-xl font-black uppercase tracking-tight">Headlines</span>
+          <span className="font-breadDisplay text-xl font-black uppercase tracking-tight">
+            Means of <span className="text-core-orange">Prediction</span>
+          </span>
           <Chip size="small">
             <span className="flex items-center gap-1">
               <Newspaper size={12} /> {IS_LOCAL ? "zkEmail settled" : "on Gnosis"}
@@ -55,7 +57,7 @@ export function Header() {
         </Link>
 
         <nav className="ml-2 flex items-center gap-1 text-sm">
-          <NavLink to="/" end className={navClass}>
+          <NavLink to="/markets" className={navClass}>
             Markets
           </NavLink>
           <NavLink to="/create" className={navClass}>

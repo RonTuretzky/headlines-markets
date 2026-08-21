@@ -1,4 +1,6 @@
-# Headlines — prediction markets settled by the newspapers themselves
+# Means of Prediction — markets settled by the newspapers themselves
+
+*(formerly "Headlines")*
 
 Binary prediction markets where **settlement is a zkEmail proof of a newspaper
 breaking-news alert email**. Anyone can permissionlessly:
@@ -29,7 +31,7 @@ real NYT email verify end to end.
 
 ## Live on Gnosis mainnet (chain 100)
 
-**App: https://ronturetzky.github.io/headlines-markets/** — a static GitHub Pages
+**App: https://ronturetzky.github.io/means-of-prediction/** — a static GitHub Pages
 bundle (no backend) that auto-indexes the deployment from
 `contracts/deployments/gnosis.json`, reads markets live from Gnosis, and connects an
 injected wallet to trade/settle. Rebuilt + redeployed by `.github/workflows/pages.yml`

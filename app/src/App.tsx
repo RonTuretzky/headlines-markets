@@ -6,6 +6,7 @@ import { ToastProvider } from "./components/Toast";
 import { WalletProvider } from "./lib/wallet";
 import { IS_LOCAL } from "./config";
 import { CreatePage } from "./pages/CreatePage";
+import { LandingPage } from "./pages/LandingPage";
 import { MarketPage } from "./pages/MarketPage";
 import { MarketsPage } from "./pages/MarketsPage";
 import { PortfolioPage } from "./pages/PortfolioPage";
@@ -32,13 +33,14 @@ export default function App() {
           <div className="min-h-screen">
             <Header />
             <Routes>
-              <Route path="/" element={<Page><MarketsPage /></Page>} />
+              <Route path="/" element={<Page><LandingPage /></Page>} />
+              <Route path="/markets" element={<Page><MarketsPage /></Page>} />
               <Route path="/market/:id" element={<Page><MarketPage /></Page>} />
               <Route path="/create" element={<Page><CreatePage /></Page>} />
               <Route path="/portfolio" element={<Page><PortfolioPage /></Page>} />
             </Routes>
             <footer className="mt-12 border-t-2 border-surface-ink bg-paper-0 px-4 py-6 text-center text-caption text-surface-grey-2">
-              Headlines — prediction markets settled by real DKIM (RSA-SHA256) signatures verified onchain,
+              Means of Prediction — markets settled by real DKIM (RSA-SHA256) signatures verified onchain,
               Conditional Tokens settlement à la Polymarket.{" "}
               {IS_LOCAL ? "Local demo on anvil." : "Live on Gnosis mainnet — connect a wallet to trade."}
             </footer>
