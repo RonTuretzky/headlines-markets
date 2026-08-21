@@ -1,17 +1,20 @@
+import { useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { Button, Chip, Logo } from "@breadcoop/ui";
-import { Newspaper } from "@phosphor-icons/react";
-import { DEV_ACCOUNTS } from "../config";
+import { Newspaper, Wallet } from "@phosphor-icons/react";
+import { DEV_ACCOUNTS, EXPLORER_URL, IS_LOCAL } from "../config";
 import { useWallet } from "../lib/wallet";
 import { useCash, USDC } from "../hooks/useMarkets";
 import { abis } from "../contracts/gen";
 import { fmtAmount } from "../lib/format";
-import { useState } from "react";
+import { useToast } from "./Toast";
 
 export function Header() {
   const wallet = useWallet();
+  const toast = useToast();
   const { data: cash } = useCash(wallet.address);
   const [fauceting, setFauceting] = useState(false);
+  const [connecting, setConnecting] = useState(false);
 
   const faucet = async () => {
     setFauceting(true);
@@ -22,20 +25,31 @@ export function Header() {
     }
   };
 
+  const connect = async () => {
+    setConnecting(true);
+    try {
+      await wallet.connect();
+    } catch (e) {
+      toast.push({ kind: "error", title: "Wallet connection failed", detail: (e as Error).message });
+    } finally {
+      setConnecting(false);
+    }
+  };
+
   const navClass = ({ isActive }: { isActive: boolean }) =>
     `font-breadDisplay font-bold uppercase tracking-wide px-2 py-1 ${
       isActive ? "text-core-orange underline underline-offset-4" : "text-surface-ink hover:text-core-orange"
     }`;
 
   return (
-    <header className="border-b-2 border-surface-ink bg-paper-0">
+    <header className="sticky top-0 z-40 border-b-2 border-surface-ink bg-paper-0/95 backdrop-blur">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-3 px-4 py-3">
         <Link to="/" className="flex items-center gap-2">
           <Logo size={30} color="orange" />
           <span className="font-breadDisplay text-xl font-black uppercase tracking-tight">Headlines</span>
           <Chip size="small">
             <span className="flex items-center gap-1">
-              <Newspaper size={12} /> zkEmail settled
+              <Newspaper size={12} /> {IS_LOCAL ? "zkEmail settled" : "on Gnosis"}
             </span>
           </Chip>
         </Link>
@@ -53,28 +67,45 @@ export function Header() {
         </nav>
 
         <div className="ml-auto flex items-center gap-3">
-          <div className="text-right">
-            <div className="text-caption text-surface-grey-2">Cash</div>
-            <div className="font-bold" data-testid="cash-balance">
-              {cash !== undefined ? fmtAmount(cash, 6) : "…"}
-            </div>
-          </div>
-          <Button size="sm" variant="secondary" onClick={faucet} isLoading={fauceting} data-testid="faucet">
-            Faucet +$10k
-          </Button>
-          <select
-            aria-label="Dev account"
-            data-testid="account-switcher"
-            className="border-2 border-surface-ink bg-paper-0 px-2 py-1.5 text-sm font-bold shadow-[0.125rem_0.125rem_0px_0px_#595959]"
-            value={wallet.accountIndex}
-            onChange={(e) => wallet.setAccountIndex(Number(e.target.value))}
-          >
-            {DEV_ACCOUNTS.map((a, i) => (
-              <option key={a.name} value={i}>
-                {a.name}
-              </option>
-            ))}
-          </select>
+          {IS_LOCAL ? (
+            <>
+              <div className="text-right">
+                <div className="text-caption text-surface-grey-2">Cash</div>
+                <div className="font-bold" data-tabular data-testid="cash-balance">
+                  {cash !== undefined ? fmtAmount(cash, 6) : "…"}
+                </div>
+              </div>
+              <Button size="sm" variant="secondary" onClick={faucet} isLoading={fauceting} data-testid="faucet">
+                Faucet +$10k
+              </Button>
+              <select
+                aria-label="Dev account"
+                data-testid="account-switcher"
+                className="border-2 border-surface-ink bg-paper-0 px-2 py-1.5 text-sm font-bold shadow-[0.125rem_0.125rem_0px_0px_#595959]"
+                value={wallet.accountIndex}
+                onChange={(e) => wallet.setAccountIndex(Number(e.target.value))}
+              >
+                {DEV_ACCOUNTS.map((a, i) => (
+                  <option key={a.name} value={i}>
+                    {a.name}
+                  </option>
+                ))}
+              </select>
+            </>
+          ) : wallet.connected ? (
+            <a
+              href={EXPLORER_URL ? `${EXPLORER_URL}/address/${wallet.address}` : "#"}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-2 border-2 border-surface-ink bg-paper-0 px-3 py-1.5 text-sm font-bold shadow-[0.125rem_0.125rem_0px_0px_#595959]"
+            >
+              <span className="h-2 w-2 rounded-full bg-system-green" /> {wallet.accountName}
+            </a>
+          ) : (
+            <Button size="sm" leftIcon={<Wallet size={14} />} isLoading={connecting} onClick={connect} data-testid="connect">
+              Connect wallet
+            </Button>
+          )}
         </div>
       </div>
     </header>

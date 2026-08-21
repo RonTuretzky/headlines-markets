@@ -27,6 +27,35 @@ real NYT email verify end to end.
                           └──────────────────┘                     └───────────────────┘
 ```
 
+## Live on Gnosis mainnet (chain 100)
+
+Deployed 2026-08-21, **all contracts verified** on [gnosisscan.io](https://gnosisscan.io) (Blockscout):
+
+| Contract | Address |
+|---|---|
+| MarketFactory | [`0xEb6dedbf1BCE0B0D60e7f807304AEA680925baA9`](https://gnosisscan.io/address/0xEb6dedbf1BCE0B0D60e7f807304AEA680925baA9) |
+| ConditionalTokens | [`0x47CCC3b9e5A531f4cC30D0D6709C4aaD429F0f78`](https://gnosisscan.io/address/0x47CCC3b9e5A531f4cC30D0D6709C4aaD429F0f78) |
+| DKIMRegistry | [`0x548427E025deBC88d816B37717002f1afD1c1E62`](https://gnosisscan.io/address/0x548427E025deBC88d816B37717002f1afD1c1E62) |
+| DKIMVerifier | [`0x353eA8FF93D818E878b14451D657938DF4B00c1A`](https://gnosisscan.io/address/0x353eA8FF93D818E878b14451D657938DF4B00c1A) |
+| HeadlineMarket impl | [`0x38570fca07b23ca49807d4456ce92eF042E87e8c`](https://gnosisscan.io/address/0x38570fca07b23ca49807d4456ce92eF042E87e8c) |
+| FPMM impl | [`0xaD0f94e49A9BE09257A99497EE8B573E379e4fCC`](https://gnosisscan.io/address/0xaD0f94e49A9BE09257A99497EE8B573E379e4fCC) |
+| First market ("Fed rate cut by October 2026?") | [`0x7024A123019CB2E83c168D37B0C7866e1b221C67`](https://gnosisscan.io/address/0x7024A123019CB2E83c168D37B0C7866e1b221C67) |
+
+- Collateral: any ERC-20 — the app offers **WXDAI, USDC, USDC.e, sDAI, EURe** (all
+  onchain-verified addresses) on Gnosis; the first market is seeded in WXDAI.
+- The **real `nytimes.com` DKIM key** (selector `scph20250409`, from DNS) is registered
+  in the mainnet DKIMRegistry — a real NYT email verifies against the mainnet
+  `DKIMVerifier` (checked post-deploy). The throwaway demo dev key is registered for
+  the sample-fixture domains; audit both in the registry's events.
+- Run the app against mainnet: `cd app && pnpm build:gnosis` (or `DEPLOYMENT=gnosis
+  pnpm sync && pnpm dev`); connect an injected wallet (MetaMask/Rabby) — the local
+  faucet/dev accounts appear only on anvil.
+- CI/CD via [etherform](https://github.com/BreadchainCoop/etherform):
+  `.github/workflows/cicd.yml` runs build/test on every PR and deploys
+  `script/DeployGnosis.s.sol` with Blockscout verification (repo secrets
+  `PRIVATE_KEY` + `RPC_URL`). `contracts/script/verify-blockscout.mjs` re-verifies a
+  manual deploy.
+
 ## See it in action
 
 **Browse & trade** — market cards with live sparklines, a price-history chart with crosshair, and the Polymarket-style buy widget ("To win $X").

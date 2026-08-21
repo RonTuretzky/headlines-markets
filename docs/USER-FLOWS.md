@@ -84,7 +84,19 @@ available per-row from the Portfolio page. LPs exit via remove-funding → redee
 Positions across all markets (Market / Outcome / Qty / Current / Value + redeem
 actions), LP rows with claimable fees, headline totals for position value and cash.
 
-## 8. Wallet & cash (local dev)
+## 8. Wallet & cash
 
-Header: test-USDC **faucet** (+$10k), **account switcher** across anvil's dev
-accounts (Alice/Bob/Carol) to play both sides of a market, live cash balance.
+- **Local (anvil)**: test-USDC **faucet** (+$10k) and an **account switcher** across
+  anvil's dev accounts (Alice/Bob/Carol) to play both sides of a market.
+- **Gnosis mainnet**: **Connect wallet** (injected — MetaMask/Rabby; auto-switches to
+  chain 100). Collateral comes from the create wizard's stablecoin selector
+  (WXDAI / USDC / USDC.e / sDAI / EURe).
+
+## 9. Condition authoring (plain words vs regex)
+
+The condition step has two modes:
+- **Plain words** (default): add headline phrases (“Fed cuts rates”, “rate cut”) — the
+  market matches an email containing **any** of them, case-insensitive with flexible
+  spacing. The generated pattern is shown and always compiles onchain.
+- **Advanced**: write the raw regex in the RegexLib subset, with the same live tester.
+Switching modes preserves the condition when the pattern is a simple phrase list.

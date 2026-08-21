@@ -131,7 +131,14 @@ test("anyone can create a market permissionlessly", async ({ page }) => {
   await expect(page.getByTestId("selected-sources")).toContainText("Reuters");
   await page.getByTestId("create-next").click();
 
-  // Step 3: regex with live tester
+  // Step 3: condition — plain-words builder first, then the advanced regex editor
+  await page.getByTestId("keyword-input").fill("rain of frogs");
+  await page.getByTestId("keyword-add").click();
+  await expect(page.getByTestId("keyword-list")).toContainText("rain of frogs");
+  await page.getByTestId("create-test-subject").fill("Breaking News: RAIN   OF   FROGS in Ohio");
+  await expect(page.getByTestId("regex-feedback")).toContainText("Matches"); // case-insensitive + flexible spaces
+  // advanced mode shows/edits the raw pattern
+  await page.getByTestId("mode-advanced").click();
   await page.getByTestId("create-regex").fill("(?i)rain(ing)? (of )?frogs");
   await page.getByTestId("create-test-subject").fill("Breaking News: It is raining frogs in Ohio");
   await expect(page.getByTestId("regex-feedback")).toContainText("Matches");

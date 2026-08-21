@@ -38,7 +38,10 @@ test("create a market", async ({ page }) => {
   await beat(page);
   await page.getByTestId("create-next").click();
   await beat(page);
-  await page.getByTestId("create-regex").fill("(?i)ecb (cuts|lowers) rates");
+  await page.getByTestId("keyword-input").fill("ECB cuts rates");
+  await page.getByTestId("keyword-add").click();
+  await page.getByTestId("keyword-input").fill("ECB lowers rates");
+  await page.getByTestId("keyword-add").click();
   await page.getByTestId("create-test-subject").fill("Breaking News: ECB cuts rates by 25bps");
   await beat(page, 1200); // live "Matches" feedback
   await page.getByTestId("create-next").click();

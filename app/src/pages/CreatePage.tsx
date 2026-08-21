@@ -5,6 +5,9 @@ import { CheckCircle, Plus, Trash, WarningCircle } from "@phosphor-icons/react";
 import { maxUint256 } from "viem";
 import { abis } from "../contracts/gen";
 import { NEWSPAPERS } from "../data/newspapers";
+import { tokensForChain, type TokenInfo } from "../data/tokens";
+import { CHAIN_ID } from "../config";
+import { KeywordBuilder, phrasesToRegex, regexToPhrases } from "../components/KeywordBuilder";
 import { ContentField, FACTORY, USDC, useCash } from "../hooks/useMarkets";
 import { parseAmount } from "../lib/format";
 import { publicClient, useWallet } from "../lib/wallet";
@@ -32,8 +35,12 @@ export function CreatePage() {
     { ...NEWSPAPERS[1], contentRegex: "" },
   ]);
   const [threshold, setThreshold] = useState(2);
+  const [regexMode, setRegexMode] = useState<"simple" | "advanced">("simple");
+  const [phrases, setPhrases] = useState<string[]>([]);
   const [contentRegex, setContentRegex] = useState("");
   const [contentField, setContentField] = useState<ContentField>(ContentField.SubjectOrBody);
+  const collateralOptions = tokensForChain(CHAIN_ID, USDC);
+  const [collateral, setCollateral] = useState<TokenInfo>(collateralOptions[0]);
   const [testSubject, setTestSubject] = useState("Breaking News: ");
   const [days, setDays] = useState(30);
   const [bufferHours, setBufferHours] = useState(24);
@@ -42,6 +49,20 @@ export function CreatePage() {
   const [startYes, setStartYes] = useState(50); // starting YES price in cents
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const setPhrasesAndRegex = (next: string[]) => {
+    setPhrases(next);
+    setContentRegex(phrasesToRegex(next));
+  };
+  const switchMode = (mode: "simple" | "advanced") => {
+    if (mode === "simple") {
+      // best-effort: recover phrases from a simple alternation pattern
+      const recovered = regexToPhrases(contentRegex);
+      setPhrases(recovered);
+      if (recovered.length) setContentRegex(phrasesToRegex(recovered));
+    }
+    setRegexMode(mode);
+  };
 
   // Live regex feedback using the browser's own RegExp — the same subset the
   // onchain engine implements (differentially tested against JS in Foundry).
@@ -85,17 +106,17 @@ export function CreatePage() {
     setBusy(true);
     setError(null);
     try {
-      const liq = parseAmount(liquidity, 6) ?? 0n;
+      const liq = parseAmount(liquidity, collateral.decimals) ?? 0n;
       if (liq > 0n) {
         const allowance = (await publicClient.readContract({
-          address: USDC,
-          abi: abis.TestUSDC,
+          address: collateral.address,
+          abi: abis.TestUSDC, // standard ERC-20 subset
           functionName: "allowance",
           args: [wallet.address, FACTORY],
         })) as bigint;
         if (allowance < liq) {
           await wallet.write({
-            address: USDC,
+            address: collateral.address,
             abi: abis.TestUSDC,
             functionName: "approve",
             args: [FACTORY, maxUint256],
@@ -131,7 +152,7 @@ export function CreatePage() {
         windowStart: BigInt(now),
         deadline: BigInt(now + days * 86400),
         resolutionBuffer: BigInt(bufferHours * 3600),
-        collateralToken: USDC,
+        collateralToken: collateral.address,
         fee: BigInt(Math.round(parseFloat(feePct || "0") * 1e16)),
         initialLiquidity: liq,
         distributionHint: hint,
@@ -290,21 +311,54 @@ export function CreatePage() {
 
         {step === 2 && (
           <div className="space-y-4">
-            <div>
-              <label className="text-caption font-bold uppercase text-surface-grey-2">Content regex</label>
-              <input
-                data-testid="create-regex"
-                placeholder="(?i)fed (cuts|lowers|slashes) (interest )?rates"
-                value={contentRegex}
-                onChange={(e) => setContentRegex(e.target.value)}
-                className="w-full border-2 border-surface-ink bg-paper-0 px-3 py-2 font-mono outline-none focus:border-core-orange"
-              />
-              <p className="mt-1 text-caption text-surface-grey-2">
-                Evaluated onchain by RegexLib. Supports literals, <code>. * + ? {"{m,n}"}</code>, classes,
-                groups, alternation, anchors, <code>\d \w \s</code> and a <code>(?i)</code> case-insensitive
-                prefix. Not supported: lookaround, backreferences.
-              </p>
+            <div className="flex border-2 border-surface-ink">
+              <button
+                data-testid="mode-simple"
+                onClick={() => switchMode("simple")}
+                className={`flex-1 px-3 py-2 font-breadDisplay font-bold uppercase ${
+                  regexMode === "simple" ? "bg-surface-ink text-paper-0" : "bg-paper-0"
+                }`}
+              >
+                Plain words
+              </button>
+              <button
+                data-testid="mode-advanced"
+                onClick={() => switchMode("advanced")}
+                className={`flex-1 px-3 py-2 font-breadDisplay font-bold uppercase ${
+                  regexMode === "advanced" ? "bg-surface-ink text-paper-0" : "bg-paper-0"
+                }`}
+              >
+                Advanced (regex)
+              </button>
             </div>
+
+            {regexMode === "simple" ? (
+              <>
+                <KeywordBuilder phrases={phrases} onChange={setPhrasesAndRegex} />
+                {contentRegex && (
+                  <p className="text-caption text-surface-grey-2">
+                    Generated condition:{" "}
+                    <code className="bg-paper-1 px-1 py-0.5 font-mono">{contentRegex}</code>
+                  </p>
+                )}
+              </>
+            ) : (
+              <div>
+                <label className="text-caption font-bold uppercase text-surface-grey-2">Content regex</label>
+                <input
+                  data-testid="create-regex"
+                  placeholder="(?i)fed (cuts|lowers|slashes) (interest )?rates"
+                  value={contentRegex}
+                  onChange={(e) => setContentRegex(e.target.value)}
+                  className="w-full border-2 border-surface-ink bg-paper-0 px-3 py-2 font-mono outline-none focus:border-core-orange"
+                />
+                <p className="mt-1 text-caption text-surface-grey-2">
+                  Evaluated onchain by RegexLib. Supports literals, <code>. * + ? {"{m,n}"}</code>, classes,
+                  groups, alternation, anchors, <code>\d \w \s</code> and a <code>(?i)</code> case-insensitive
+                  prefix. Not supported: lookaround, backreferences.
+                </p>
+              </div>
+            )}
 
             <div>
               <label className="text-caption font-bold uppercase text-surface-grey-2">Match against</label>
@@ -381,8 +435,26 @@ export function CreatePage() {
                 />
               </div>
               <div>
+                <label className="text-caption font-bold uppercase text-surface-grey-2">Collateral token</label>
+                <select
+                  data-testid="create-collateral"
+                  className="w-full border-2 border-surface-ink bg-paper-0 px-3 py-2 font-bold outline-none"
+                  value={collateral.address}
+                  onChange={(e) =>
+                    setCollateral(collateralOptions.find((t) => t.address === e.target.value) ?? collateralOptions[0])
+                  }
+                >
+                  {collateralOptions.map((t) => (
+                    <option key={t.address} value={t.address}>
+                      {t.symbol}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-caption text-surface-grey-2">{collateral.note}</p>
+              </div>
+              <div>
                 <label className="text-caption font-bold uppercase text-surface-grey-2">
-                  Initial liquidity (USDC)
+                  Initial liquidity ({collateral.symbol})
                 </label>
                 <input
                   data-testid="create-liquidity"
@@ -390,9 +462,11 @@ export function CreatePage() {
                   onChange={(e) => setLiquidity(e.target.value)}
                   className="w-full border-2 border-surface-ink bg-paper-0 px-3 py-2 outline-none"
                 />
-                <p className="text-caption text-surface-grey-2">
-                  Your cash: {cash !== undefined ? (Number(cash) / 1e6).toFixed(2) : "…"} USDC
-                </p>
+                {collateral.faucet && (
+                  <p className="text-caption text-surface-grey-2">
+                    Your cash: {cash !== undefined ? (Number(cash) / 1e6).toFixed(2) : "…"} USDC
+                  </p>
+                )}
               </div>
               <div>
                 <label className="text-caption font-bold uppercase text-surface-grey-2">Trading fee (%)</label>
@@ -434,7 +508,7 @@ export function CreatePage() {
                   : contentField === ContentField.Body
                     ? "body"
                     : "subject or body"}{" "}
-                · {days}d deadline · {feePct}% fee · {liquidity} USDC seed
+                · {days}d deadline · {feePct}% fee · {liquidity} {collateral.symbol} seed
               </p>
             </div>
 

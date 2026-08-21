@@ -10,7 +10,9 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const out = (name) =>
   JSON.parse(readFileSync(join(root, "contracts", "out", `${name}.sol`, `${name}.json`), "utf8")).abi;
 
-const deployment = JSON.parse(readFileSync(join(root, "contracts", "deployments", "local.json"), "utf8"));
+// DEPLOYMENT=gnosis (or local, default) picks which deployment the app targets.
+const network = process.env.DEPLOYMENT ?? "local";
+const deployment = JSON.parse(readFileSync(join(root, "contracts", "deployments", `${network}.json`), "utf8"));
 
 const abis = {
   MarketFactory: out("MarketFactory"),
@@ -31,4 +33,4 @@ export const abis = ${JSON.stringify(abis, null, 2)} as const;
 const dest = join(dirname(fileURLToPath(import.meta.url)), "..", "src", "contracts");
 mkdirSync(dest, { recursive: true });
 writeFileSync(join(dest, "gen.ts"), ts);
-console.log("synced ABIs + addresses ->", join(dest, "gen.ts"));
+console.log(`synced ABIs + addresses (${network}, chain ${deployment.chainId}) ->`, join(dest, "gen.ts"));

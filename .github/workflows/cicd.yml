@@ -1,0 +1,29 @@
+# Etherform CI/CD (github.com/BreadchainCoop/etherform): build + test on every push/PR,
+# and deploy script/DeployGnosis.s.sol with Blockscout verification when deploy-on-pr
+# is enabled. Requires repo secrets:
+#   PRIVATE_KEY — deployer key (use a dedicated deployer, never a funded personal key)
+#   RPC_URL     — https://rpc.gnosischain.com
+name: CI/CD
+on: [push, pull_request]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: cicd-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  cicd:
+    uses: BreadchainCoop/etherform/.github/workflows/_foundry-cicd.yml@main
+    with:
+      package-manager: pnpm
+      deploy-on-pr: true
+      deploy-script: "script/DeployGnosis.s.sol:DeployGnosis"
+      # forge test in CI: the ffi-based RSA/differential tests need node — provided
+      # by the workflow's node setup (node-version default 22)
+      contract-paths: "contracts/src/** contracts/script/** contracts/test/** contracts/foundry.toml"
+    secrets:
+      RPC_URL: ${{ secrets.RPC_URL }}
+      PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
