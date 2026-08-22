@@ -57,6 +57,19 @@ and per-recipient tracking tokens); it lives untracked under `.context/`.
   the registry keys on domain, not selector).
 - Full body templates.
 
+
+## DKIM public keys — discovered at scale (2026-08-21)
+
+`app/scripts/discover-dkim.mjs` swept 109 outlets (wires, US/UK/EU majors, Global
+South dailies) through the [ZK Email DKIM archive](https://archive.prove.email) plus
+live-DNS re-verification and ESP-selector brute-forcing: **564 RSA keys, 562 live,
+97 outlets with at least one live key**. Full table: [DKIM-KEYS.md](DKIM-KEYS.md);
+registry-ready data: `dkim-keys-public.json`. Every live key is registered in the
+Gnosis and Sepolia `DKIMRegistry` by `register-dkim-keys.mjs` (permissionless), so a
+real alert from any of these outlets verifies onchain today. The create wizard
+lists all of them as presets (DKIM domain = the outlet's most newsletter-like keyed
+domain; marked unverified until a received email confirms the `d=`).
+
 ## Source table (as configured in `app/src/data/newspapers.ts`)
 
 | Outlet | DKIM/send domain (DNS-verified) | ESP | From (confidence) | Breaking-news email? |

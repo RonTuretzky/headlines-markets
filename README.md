@@ -52,10 +52,10 @@ Deployed 2026-08-21, **all contracts verified** on [gnosisscan.io](https://gnosi
 
 - Collateral: any ERC-20 — the app offers **WXDAI, USDC, USDC.e, sDAI, EURe** (all
   onchain-verified addresses) on Gnosis; the first market is seeded in WXDAI.
-- The **real `nytimes.com` DKIM key** (selector `scph20250409`, from DNS) is registered
-  in the mainnet DKIMRegistry — a real NYT email verifies against the mainnet
-  `DKIMVerifier` (checked post-deploy). The throwaway demo dev key is registered for
-  the sample-fixture domains; audit both in the registry's events.
+- **~560 real newspaper DKIM keys** (97 outlets — see [docs/DKIM-KEYS.md](docs/DKIM-KEYS.md),
+  discovered via the ZK Email archive + live DNS) are registered in the mainnet
+  DKIMRegistry, so a genuine alert from any of them verifies onchain. The throwaway
+  demo key is **revoked** on mainnet; audit everything in the registry's events.
 - Run the app against mainnet: `cd app && pnpm build:gnosis` (or `DEPLOYMENT=gnosis
   pnpm sync && pnpm dev`); connect an injected wallet (MetaMask/Rabby) — the local
   faucet/dev accounts appear only on anvil.
