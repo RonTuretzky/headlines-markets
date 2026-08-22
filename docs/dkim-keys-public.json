@@ -2,7 +2,7 @@
  "generatedAt": "2026-08-22T06:44:09.445Z",
  "outlets": 109,
  "keys": 564,
- "liveKeys": 562,
+ "liveKeys": 561,
  "outletsWithLiveKey": 97,
  "records": [
   {
@@ -4550,10 +4550,10 @@
    "modulus": "0xab2c7884c55779e7377f210fc9fe6470491300a1c57f84c0778d7c1a1c7dfa77d35a5729d015857c35a5a2ebd735bde52d4731adef2022a17a8b8fb6784de114a0e2e0acab27f189dc906b3d8b7077b55141f8287fe263e15d688d7cd7729c758170f71b27c923110d94f32efc747663d587915d756f5a86f639a2b29cef3f95",
    "exponent": "0x010001",
    "bits": 1024,
-   "source": "dns-brute",
+   "source": "dns-brute(rotated-out 2026-08-21)",
    "firstSeen": null,
    "lastSeen": null,
-   "live": true
+   "live": false
   },
   {
    "outlet": "The Boston Globe",

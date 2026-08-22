@@ -3,7 +3,7 @@
 Generated 2026-08-22 by `app/scripts/discover-dkim.mjs` from the
 [ZK Email DKIM archive](https://archive.prove.email) (keys observed in real email) plus
 live-DNS re-verification and ESP-selector brute-forcing. **564 RSA keys across
-97/109 outlets have a key that is live in DNS right now** (562 live keys).
+97/109 outlets have a key that is live in DNS right now** (561 live keys).
 
 - **live** = the selector currently resolves in DNS with this exact key → the outlet can
   sign email with it today; these are registered in the Gnosis + Sepolia DKIMRegistry
@@ -366,8 +366,8 @@ Registry-ready data (modulus/exponent hex): `docs/dkim-keys-public.json`.
 | The Boston Globe | US | `bostonglobe.com` | `zendesk2` | 2048 | **live** | — | — | dns-brute |
 | The Boston Globe | US | `email.bostonglobe.com` | `200608` | 1024 | **live** | — | — | dns-brute |
 | The Boston Globe | US | `email.bostonglobe.com` | `mail` | 1024 | **live** | — | — | dns-brute |
-| The Boston Globe | US | `email.bostonglobe.com` | `mandrill` | 1024 | **live** | — | — | dns-brute |
 | The Boston Globe | US | `email.bostonglobe.com` | `smtpapi` | 1024 | **live** | — | — | dns-brute |
+| The Boston Globe | US | `email.bostonglobe.com` | `mandrill` | 1024 | archived | — | — | dns-brute(rotated-out 2026-08-21) |
 | The Conversation | global | `mail.theconversation.com` | `scph1225` | 2048 | **live** | — | — | dns-brute |
 | The Conversation | global | `theconversation.com` | `cm` | 1024 | **live** | — | — | dns-brute |
 | The Conversation | global | `theconversation.com` | `google` | 2048 | **live** | — | — | dns-brute |
