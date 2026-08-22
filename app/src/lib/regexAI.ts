@@ -37,19 +37,41 @@ const BANNED: Array<[RegExp, string]> = [
   [/\(\?!/, "negative lookahead (?!…) is not supported onchain"],
   [/\(\?</, "lookbehind / named groups are not supported onchain"],
   [/\(\?P/, "named groups are not supported onchain"],
-  [/\(\?:/, "non-capturing groups (?:…) are not supported — use plain (…)"],
-  [/\\[bB]/, "\\b word boundaries are not supported — use \\s or literal spaces"],
   [/\\[1-9]/, "backreferences are not supported onchain"],
   [/\\p\{/i, "unicode property classes \\p{…} are not supported"],
   [/\\[kK]</, "named backreferences are not supported"],
 ];
 
+/**
+ * Small models drift from the spec in predictable, harmless ways. Rewrite those
+ * into the onchain subset instead of failing: `(?:…)` is equivalent to `(…)` in
+ * RegexLib (both supported; normalize for clarity), and `\b` word boundaries
+ * (unsupported) are dropped — that only loosens the match, which suits a
+ * permissive headline pattern the user reviews anyway.
+ */
+export function normalizePattern(pattern: string): { pattern: string; notes: string[] } {
+  const notes: string[] = [];
+  let p = pattern.trim();
+  // inline-flag variants: "(?i:...)" / mid-pattern "(?i)" → single leading (?i)
+  if (/\(\?i\)/.test(p.slice(4)) || /\(\?i:/.test(p)) {
+    p = p.replace(/\(\?i:/g, "(").replace(/\(\?i\)/g, "");
+    p = `(?i)${p}`;
+    notes.push("moved the case-insensitive flag to a single leading (?i)");
+  }
+  if (/\\[bB]/.test(p)) {
+    p = p.replace(/\\[bB]/g, "");
+    notes.push("removed \\b word boundaries (unsupported onchain; pattern is slightly looser)");
+  }
+  return { pattern: p, notes };
+}
+
 /** Returns an error message when the pattern leaves the RegexLib subset, else null. */
 export function lintSubset(pattern: string): string | null {
   if (!pattern.trim()) return "empty pattern";
   const body = pattern.startsWith("(?i)") ? pattern.slice(4) : pattern;
-  if (/\(\?/.test(body)) {
-    return "only a single leading (?i) flag group is supported — no other (?…) constructs";
+  // any "(?" construct other than the non-capturing "(?:" (supported) is out of subset
+  if (/\(\?(?!:)/.test(body)) {
+    return "only a single leading (?i) flag and (?:…) groups are supported — no lookaround, named groups or inline flags";
   }
   for (const [re, msg] of BANNED) {
     if (re.test(body)) return msg;
@@ -97,10 +119,10 @@ const SYSTEM = `You translate a plain-English description of a breaking-news con
 regular expression for an onchain matcher with a restricted syntax.
 
 ALLOWED syntax: literal characters, "." "*" "+" "?" "{m,n}", character classes like [a-z0-9,$],
-capturing groups ( ), alternation |, anchors ^ $, the escapes \\d \\w \\s \\. \\$ etc., and an
+groups ( ) or (?: ), alternation |, anchors ^ $, the escapes \\d \\w \\s \\. \\$ etc., and an
 OPTIONAL single leading "(?i)" for case-insensitive matching (almost always wanted).
-FORBIDDEN: lookahead/lookbehind (?= (?! (?<, non-capturing groups (?:, named groups, \\b, \\B,
-backreferences, \\p{...}. Any of these makes the answer invalid.
+FORBIDDEN: lookahead/lookbehind (?= (?! (?<, named groups, \\b, \\B, backreferences,
+\\p{...}, inline flags other than the leading (?i). Any of these makes the answer invalid.
 
 The regex runs over newspaper BREAKING-NEWS EMAIL SUBJECT LINES. Papers word the same story many
 ways, so produce a LONG, PERMISSIVE pattern: alternations covering every plausible phrasing,
@@ -266,7 +288,7 @@ export async function generateRegex(
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     onProgress({ stage: "generating", note: `${engine.name} — attempt ${attempt}/${MAX_ATTEMPTS}` });
     const raw = await engine.generate(SYSTEM, userPrompt(intent, examples, feedback));
-    const pattern = extractPattern(raw);
+    const { pattern } = normalizePattern(extractPattern(raw));
     lastPattern = pattern;
     onProgress({ stage: "validating", note: pattern });
     const problem = validateRegex(pattern, examples);

@@ -67,6 +67,12 @@ malformed regexes all revert at creation.
 Contract tests cover the full rejection matrix (wrong domain/From/content, tampered
 fields, unknown DKIM key, out-of-window dates, replayed emails, duplicate sources).
 
+### Automatic settlement
+
+The settlement bot (`app/scripts/settlement-bot.mjs`, daily via `settle.yml`) does
+steps 1–4 unattended from an IMAP mailbox subscribed to the alert lists, registering
+unseen DKIM keys from DNS on the way, and resolves NO after deadline + buffer.
+
 ## 5. Settle NO (permissionless)
 
 After `deadline + resolutionBuffer` with the threshold unmet, the Resolution panel

@@ -1,0 +1,768 @@
+[
+ {
+  "pmQuestion": "Will the U.S. invade Iran before 2027?",
+  "volumeNum": 59287034,
+  "category": "World",
+  "ourQuestion": "Will the U.S. invade Iran by December 31, 2026?",
+  "description": "Resolves YES if at least 2 of the listed newspapers (AP, Reuters, NYT, Washington Post, CNN, WSJ, The Guardian, Bloomberg) send a breaking-news alert email whose subject reports that the United States has invaded Iran, before January 1, 2027. The subject regex matches declarative invasion language such as 'U.S. invades Iran', 'Trump orders invasion of Iran', or 'American ground troops cross into Iran', with the U.S./Trump token word-bounded so 'White House' or 'Russian' cannot satisfy it and with launch verbs bound directly to 'invasion of Iran' through a short qualifier whitelist. Airstrike headlines ('U.S. strikes Iran'), threats ('threatens to invade'), speculative headlines ('ahead of possible invasion'), and question headlines do not match. Resolves NO at the deadline otherwise.",
+  "sources": [
+   "Associated Press",
+   "Reuters",
+   "The New York Times",
+   "The Washington Post",
+   "CNN",
+   "The Wall Street Journal",
+   "The Guardian",
+   "Bloomberg"
+  ],
+  "threshold": 2,
+  "contentRegex": "(?i)^([^?]*[^a-z?])?(u\\.?s\\.?[^a-z?]|united states|america|trump)[^?]*(invades iran|(launches|launched|orders|ordered|begins|began|starts|started|opens|opened)( (a|an|the|its|his|full|full-scale|ground|land|massive|major))* invasion of iran|(ground )?invasion of iran (begins|has begun|is underway|is under way|underway)|(ground )?(troops|forces) (enter|cross into|storm into|push into|pour into|move into) iran)[^?]*$",
+  "contentField": "subject",
+  "deadlineIso": "2027-01-01T00:00:00Z",
+  "windowStartZero": false
+ },
+ {
+  "pmQuestion": "Will LeBron James win the 2028 US Presidential Election?",
+  "volumeNum": 54562029,
+  "category": "Politics",
+  "ourQuestion": "Will LeBron James win the 2028 U.S. presidential election? (race call by November 14, 2028)",
+  "description": "Resolves YES if at least 2 of the listed newspapers (AP, NYT, Washington Post, CNN, Reuters, WSJ) send an alert email whose subject declares LeBron James elected president or winner of the 2028 presidential election, by November 14, 2028 (allowing a week for race calls after the November 7 election). The regex requires 'LeBron' plus declarative race-call language: 'elected the 48th president', 'elected president of the United States', 'wins/has won the presidency (or the White House / the (U.S.) presidential election)', 'projected winner of the presidency', or 'defeats ... to win the presidency'. Bare 'elected president' without U.S.-presidency context is excluded so a players-union or other organizational presidency cannot match, and campaign, poll, hypothetical-matchup, and question headlines do not match. Resolves NO at the deadline otherwise.",
+  "sources": [
+   "Associated Press",
+   "The New York Times",
+   "The Washington Post",
+   "CNN",
+   "Reuters",
+   "The Wall Street Journal"
+  ],
+  "threshold": 2,
+  "contentRegex": "(?i)^[^?]*lebron[^?]*(elected (the )?[0-9]+(st|nd|rd|th) president|elected president of the united states|(wins|has won|clinches|captures|secures|takes) (the )?(presidency|white house|(2028 )?(u\\.?s\\.? )?presidential election)|projected winner of the presiden[a-z]+|defeats [^?]*to (win|claim|capture) the (presidency|white house))[^?]*$",
+  "contentField": "subject",
+  "deadlineIso": "2028-11-14T00:00:00Z",
+  "windowStartZero": false
+ },
+ {
+  "pmQuestion": "Will Oprah Winfrey win the 2028 Democratic presidential nomination?",
+  "volumeNum": 54311286,
+  "category": "Politics",
+  "ourQuestion": "Will Oprah Winfrey win the 2028 Democratic presidential nomination? (by November 7, 2028)",
+  "description": "Resolves YES if at least 2 of the listed newspapers (AP, NYT, Washington Post, CNN, Reuters) send an alert email whose subject reports Oprah Winfrey winning, clinching, or becoming the Democratic presidential nominee, or Democrats nominating her, before 00:00 UTC November 8, 2028. The regex binds her name directly to a victory verb ('Oprah Winfrey clinches/wins/secures/accepts ... the Democratic (presidential) nomination'), to nominee-declaration language ('becomes/is now/is the Democratic (Party's) (presumptive) nominee'), or to 'Democrats (formally) nominate Oprah Winfrey'. Endorsements, polls, frontrunner coverage, single-primary wins, headlines where a rival clinches, and question headlines do not match. Resolves NO at the deadline otherwise.",
+  "sources": [
+   "Associated Press",
+   "The New York Times",
+   "The Washington Post",
+   "CNN",
+   "Reuters"
+  ],
+  "threshold": 2,
+  "contentRegex": "(?i)^[^?]*((oprah( winfrey)?|winfrey)( officially| formally)? (clinches|wins|has won|secures|captures|accepts|locks up) (the )?(2028 )?(democratic|democrats'?)( party's)?( presidential)? (nomination|nominee)|(oprah( winfrey)?|winfrey)( officially| formally)? (becomes|is now|is officially|is set to become|will be|is) the (2028 )?(presumptive )?(democratic|democrats'?)( party's)?( presumptive)?( presidential)? nominee([^'’a-z?]|$)|democrats( formally| officially)? nominate (oprah|winfrey))[^?]*$",
+  "contentField": "subject",
+  "deadlineIso": "2028-11-08T00:00:00Z",
+  "windowStartZero": false
+ },
+ {
+  "pmQuestion": "Will Bernie Sanders win the 2028 Democratic presidential nomination?",
+  "volumeNum": 52709106,
+  "category": "Politics",
+  "ourQuestion": "Will Bernie Sanders win the 2028 Democratic presidential nomination? (by November 7, 2028)",
+  "description": "Resolves YES if at least 2 of the listed newspapers (AP, NYT, Washington Post, CNN, Reuters) send an alert email whose subject reports Bernie Sanders winning, clinching, or becoming the Democratic presidential nominee, or Democrats nominating him, before 00:00 UTC November 8, 2028. The regex binds his name directly to a victory verb ('Bernie Sanders clinches/wins/secures/accepts ... the Democratic (presidential) nomination'), to nominee-declaration language ('becomes/is now/is the Democratic (Party's) (presumptive) nominee'), or to 'Democrats (formally) nominate Bernie Sanders'. Endorsements, polls, single-primary wins, dropout coverage, headlines where a rival clinches, and question headlines do not match. Resolves NO at the deadline otherwise.",
+  "sources": [
+   "Associated Press",
+   "The New York Times",
+   "The Washington Post",
+   "CNN",
+   "Reuters"
+  ],
+  "threshold": 2,
+  "contentRegex": "(?i)^[^?]*((bernie( sanders)?|sanders)( officially| formally)? (clinches|wins|has won|secures|captures|accepts|locks up) (the )?(2028 )?(democratic|democrats'?)( party's)?( presidential)? (nomination|nominee)|(bernie( sanders)?|sanders)( officially| formally)? (becomes|is now|is officially|is set to become|will be|is) the (2028 )?(presumptive )?(democratic|democrats'?)( party's)?( presumptive)?( presidential)? nominee([^'’a-z?]|$)|democrats( formally| officially)? nominate (bernie|sanders))[^?]*$",
+  "contentField": "subject",
+  "deadlineIso": "2028-11-08T00:00:00Z",
+  "windowStartZero": false
+ },
+ {
+  "pmQuestion": "Will Chelsea Clinton win the 2028 Democratic presidential nomination?",
+  "volumeNum": 50241674,
+  "category": "Politics",
+  "ourQuestion": "Will Chelsea Clinton win the 2028 Democratic presidential nomination? (by November 7, 2028)",
+  "description": "Resolves YES if at least 2 of the listed newspapers (AP, NYT, Washington Post, CNN, Reuters) send an alert email whose subject reports Chelsea Clinton winning, clinching, or becoming the Democratic presidential nominee, or Democrats nominating her, by the end of November 7, 2028 (UTC). The regex requires 'Chelsea Clinton' immediately followed by a victory verb (clinches/wins/secures/captures/accepts/locks up, optionally via 'enough delegates to clinch') bound to a Democratic nomination phrase, or 'becomes/is the (presumptive) Democratic (presidential) nominee', or 'Democrats (formally) nominate Chelsea Clinton'; candidacy announcements, primary wins, polling, negated and question headlines do not match. Resolves NO at the deadline otherwise.",
+  "sources": [
+   "Associated Press",
+   "The New York Times",
+   "The Washington Post",
+   "CNN",
+   "Reuters"
+  ],
+  "threshold": 2,
+  "contentRegex": "(?i).*(chelsea clinton( officially| formally)? (clinches|secures|wins|has won|captures|accepts|locks up)( enough delegates to (clinch|secure|win))?( the| her| 2028)?( 2028)? (democratic|democrats'?)( party'?s)?( presidential)? nominat|chelsea clinton( officially| formally)? (will be|becomes|is now|is set to become|is) the( 2028)?( presumptive)? (democratic|democrats'?)( party'?s?)?( presumptive)?( presidential)? nominee|(democrats|(the )?democratic party)( formally| officially)? nominates? chelsea clinton).*",
+  "contentField": "subject",
+  "deadlineIso": "2028-11-08T00:00:00Z",
+  "windowStartZero": false
+ },
+ {
+  "pmQuestion": "Will Andrew Yang win the 2028 Democratic presidential nomination?",
+  "volumeNum": 48666793,
+  "category": "Politics",
+  "ourQuestion": "Will Andrew Yang win the 2028 Democratic presidential nomination? (by November 7, 2028)",
+  "description": "Resolves YES if at least 2 of the listed newspapers (AP, NYT, Washington Post, CNN, Reuters) send an alert email whose subject reports Andrew Yang winning, clinching, or becoming the Democratic presidential nominee, or Democrats nominating him, by the end of November 7, 2028 (UTC). The regex requires 'Yang' (optionally 'Andrew Yang') immediately followed by a victory verb bound to a Democratic nomination phrase, or 'becomes/is the (presumptive) Democratic (presidential) nominee', or 'Democrats (formally) nominate (Andrew) Yang'; dropout, candidacy, polling, endorsement, primary-win, and question headlines do not match. Resolves NO at the deadline otherwise.",
+  "sources": [
+   "Associated Press",
+   "The New York Times",
+   "The Washington Post",
+   "CNN",
+   "Reuters"
+  ],
+  "threshold": 2,
+  "contentRegex": "(?i).*((andrew )?yang( officially| formally)? (clinches|secures|wins|has won|captures|accepts|locks up)( enough delegates to (clinch|secure|win))?( the| his| 2028)?( 2028)? (democratic|democrats'?)( party'?s)?( presidential)? nominat|(andrew )?yang( officially| formally)? (will be|becomes|is now|is set to become|is) the( 2028)?( presumptive)? (democratic|democrats'?)( party'?s?)?( presumptive)?( presidential)? nominee|(democrats|(the )?democratic party)( formally| officially)? nominates? (andrew )?yang).*",
+  "contentField": "subject",
+  "deadlineIso": "2028-11-08T00:00:00Z",
+  "windowStartZero": false
+ },
+ {
+  "pmQuestion": "Will Tim Walz win the 2028 US Presidential Election?",
+  "volumeNum": 44515145,
+  "category": "Politics",
+  "ourQuestion": "Will Tim Walz win the 2028 US presidential election? (resolves by Dec 15, 2028)",
+  "description": "Resolves YES if at least 2 of Associated Press, The New York Times, The Washington Post, CNN, and Reuters send a DKIM-signed alert email whose subject reports Tim Walz elected president or winning the presidency/White House (e.g. 'Walz wins the presidency', 'President-elect Tim Walz', 'Walz elected 47th president'). The pattern requires the victory verb to follow Walz's name directly, so subjects about the nomination, debates, concessions, or an opponent defeating Walz do not match. Resolves NO if no 2 matching alerts arrive by December 15, 2028; the extended window past Election Day (November 7) allows for a delayed race call or recount.",
+  "sources": [
+   "Associated Press",
+   "The New York Times",
+   "The Washington Post",
+   "CNN",
+   "Reuters"
+  ],
+  "threshold": 2,
+  "contentRegex": "(?i)(president-elect (tim )?walz|walz,? (is )?elected (as )?(the )?(us |u\\.s\\. )?(\\d\\d(th|st|nd|rd) )?president|walz wins (the )?(us |u\\.s\\. |2028 )?(presidency|white house|presidential election)|walz (clinches|captures|secures|claims) the (presidency|white house)|walz defeats [\\w\\-'\\. ]+ to (win|claim|capture) the (presidency|white house))",
+  "contentField": "subject",
+  "deadlineIso": "2028-12-15T00:00:00Z",
+  "windowStartZero": false
+ },
+ {
+  "pmQuestion": "Will Byron Donalds win the 2028 Republican presidential nomination?",
+  "volumeNum": 44387465,
+  "category": "Politics",
+  "ourQuestion": "Will Byron Donalds win the 2028 Republican presidential nomination? (resolves by Nov 7, 2028)",
+  "description": "Resolves YES if at least 2 of Associated Press, The New York Times, The Washington Post, CNN, and Reuters send alert emails whose subject reports Byron Donalds winning/clinching the Republican (GOP/G.O.P.) presidential nomination, becoming the presumptive Republican nominee, or Republicans nominating him for president. Presidential context is required in the pattern, so his 2026 Florida governor primary or other down-ballot nominations cannot match, and endorsement or campaign-launch subjects do not match. Resolves NO if no 2 matching alerts arrive by November 7, 2028.",
+  "sources": [
+   "Associated Press",
+   "The New York Times",
+   "The Washington Post",
+   "CNN",
+   "Reuters"
+  ],
+  "threshold": 2,
+  "contentRegex": "(?i)((byron )?donalds (wins|clinches|captures|secures|claims) (the )?(2028 )?(republican|gop|g\\.o\\.p\\.?)( party's)? presidential nomination|(byron )?donalds (wins|clinches|captures|secures|claims) (the )?(2028 )?(republican|gop|g\\.o\\.p\\.?)( party's)? nomination for president|(byron )?donalds (is|becomes)( officially| formally)? the( 2028)? (republican|gop|g\\.o\\.p\\.?)('s| party's)? (presumptive )?presidential nominee|(byron )?donalds (is|becomes)( officially| formally)? the presumptive( 2028)? (republican|gop|g\\.o\\.p\\.?) nominee|republicans (formally )?nominate (byron )?donalds for president|(byron )?donalds accepts (the )?(2028 )?(republican|gop|g\\.o\\.p\\.?)( party's)? (presidential nomination|nomination for president))",
+  "contentField": "subject",
+  "deadlineIso": "2028-11-07T00:00:00Z",
+  "windowStartZero": false
+ },
+ {
+  "pmQuestion": "Will Hunter Biden win the 2028 Democratic presidential nomination?",
+  "volumeNum": 44203124,
+  "category": "Politics",
+  "ourQuestion": "Will Hunter Biden win the 2028 Democratic presidential nomination? (resolves by Nov 7, 2028)",
+  "description": "Resolves YES if at least 2 of Associated Press, The New York Times, The Washington Post, CNN, and Reuters send alert emails whose subject reports Hunter Biden winning/clinching the Democratic presidential nomination, becoming the presumptive Democratic nominee, or Democrats nominating him for president. The full name 'Hunter Biden' is required, so subjects about Joe Biden or any other Biden cannot match, and campaign-launch or endorsement subjects do not match. Resolves NO if no 2 matching alerts arrive by November 7, 2028.",
+  "sources": [
+   "Associated Press",
+   "The New York Times",
+   "The Washington Post",
+   "CNN",
+   "Reuters"
+  ],
+  "threshold": 2,
+  "contentRegex": "(?i)(hunter biden (wins|clinches|captures|secures|claims) (the )?(2028 )?(democratic|dnc)( party's)? presidential nomination|hunter biden (wins|clinches|captures|secures|claims) (the )?(2028 )?(democratic|dnc)( party's)? nomination for president|hunter biden (is|becomes)( officially| formally)? the( 2028)? (democratic|dnc)('s| party's)? (presumptive )?presidential nominee|hunter biden (is|becomes)( officially| formally)? the presumptive( 2028)? (democratic|dnc) nominee|democrats (formally )?nominate hunter biden for president|hunter biden accepts (the )?(2028 )?(democratic|dnc)( party's)? (presidential nomination|nomination for president))",
+  "contentField": "subject",
+  "deadlineIso": "2028-11-07T00:00:00Z",
+  "windowStartZero": false
+ },
+ {
+  "pmQuestion": "Will LeBron James win the 2028 Democratic presidential nomination?",
+  "volumeNum": 43869299,
+  "category": "Politics",
+  "ourQuestion": "Will LeBron James win the 2028 Democratic presidential nomination? (resolves by Nov 7, 2028)",
+  "description": "Resolves YES if at least 2 of Associated Press, The New York Times, The Washington Post, CNN, and Reuters send alert emails whose subject reports LeBron James winning/clinching the Democratic presidential nomination, becoming the presumptive Democratic nominee, or Democrats nominating him for president. The pattern requires a nomination verb directly after his name plus presidential/presumptive-nominee context, so NBA headlines and endorsement subjects cannot match. Resolves NO if no 2 matching alerts arrive by November 7, 2028.",
+  "sources": [
+   "Associated Press",
+   "The New York Times",
+   "The Washington Post",
+   "CNN",
+   "Reuters"
+  ],
+  "threshold": 2,
+  "contentRegex": "(?i)(lebron( james)? (wins|clinches|captures|secures|claims) (the )?(2028 )?(democratic|dnc)( party's)? presidential nomination|lebron( james)? (wins|clinches|captures|secures|claims) (the )?(2028 )?(democratic|dnc)( party's)? nomination for president|lebron( james)? (is|becomes)( officially| formally)? the( 2028)? (democratic|dnc)('s| party's)? (presumptive )?presidential nominee|lebron( james)? (is|becomes)( officially| formally)? the presumptive( 2028)? (democratic|dnc) nominee|democrats (formally )?nominate lebron( james)? for president|lebron( james)? accepts (the )?(2028 )?(democratic|dnc)( party's)? (presidential nomination|nomination for president))",
+  "contentField": "subject",
+  "deadlineIso": "2028-11-07T00:00:00Z",
+  "windowStartZero": false
+ },
+ {
+  "pmQuestion": "Will Hillary Clinton win the 2028 Democratic presidential nomination?",
+  "volumeNum": 43731683,
+  "category": "Politics",
+  "ourQuestion": "Will Hillary Clinton win the 2028 Democratic presidential nomination? (resolves by Nov 7, 2028)",
+  "description": "Resolves YES if at least 2 of Associated Press, The New York Times, The Washington Post, CNN, and Reuters send alert emails whose subject reports Hillary Clinton winning/clinching the Democratic presidential nomination (including delegate-count clinch phrasings), becoming the presumptive Democratic nominee, or Democrats nominating her for president. The full name 'Hillary (Rodham) Clinton' is required, and every branch demands presidential, year-2028, or presumptive-nominee context, so other Clintons' races, endorsements, and state-office nominations cannot match. Resolves NO if no 2 matching alerts arrive by November 7, 2028.",
+  "sources": [
+   "Associated Press",
+   "The New York Times",
+   "The Washington Post",
+   "CNN",
+   "Reuters"
+  ],
+  "threshold": 2,
+  "contentRegex": "(?i)(hillary( rodham)? clinton( officially| formally)? (clinches|wins|secures|accepts) (the )?(2028 )?democratic( party's)?( presidential)? nomination|hillary( rodham)? clinton (is|becomes) the (presumptive )?democratic (presidential )?nominee|democrats (formally )?nominate hillary( rodham)? clinton for president)",
+  "contentField": "subject",
+  "deadlineIso": "2028-11-07T00:00:00Z",
+  "windowStartZero": false
+ },
+ {
+  "pmQuestion": "Will Mike Pence win the 2028 Republican presidential nomination?",
+  "volumeNum": 43380445,
+  "category": "Politics",
+  "ourQuestion": "Will Mike Pence win the 2028 Republican presidential nomination? (resolves by Nov 7, 2028)",
+  "description": "Resolves YES if at least 2 of Associated Press, The New York Times, The Washington Post, CNN, and Reuters send alert emails whose subject reports Mike Pence winning/clinching the Republican (GOP/G.O.P.) presidential nomination (including delegate-count clinch phrasings), becoming the presumptive Republican nominee, or Republicans nominating him for president. Presidential, year-2028, or presumptive-nominee context is required in every branch, so a hypothetical Pence Senate or governor primary win and campaign-launch subjects cannot match. Resolves NO if no 2 matching alerts arrive by November 7, 2028.",
+  "sources": [
+   "Associated Press",
+   "The New York Times",
+   "The Washington Post",
+   "CNN",
+   "Reuters"
+  ],
+  "threshold": 2,
+  "contentRegex": "(?i)((mike|michael) pence( officially| formally)? (clinches|wins|secures|accepts) (the )?(2028 )?(republican|gop)( party's)?( presidential)? nomination|(mike|michael) pence (is|becomes) the (presumptive )?(republican|gop) (presidential )?nominee|republicans (formally )?nominate (mike|michael) pence for president)",
+  "contentField": "subject",
+  "deadlineIso": "2028-11-07T00:00:00Z",
+  "windowStartZero": false
+ },
+ {
+  "pmQuestion": "Will Tim Walz win the 2028 Democratic presidential nomination?",
+  "volumeNum": 43021749,
+  "category": "Politics",
+  "ourQuestion": "Will Tim Walz win the 2028 Democratic presidential nomination? (resolves by Nov 7, 2028)",
+  "description": "Resolves YES if at least 2 of Associated Press, The New York Times, The Washington Post, CNN, and Reuters send alert emails whose subject reports Tim Walz winning/clinching the Democratic presidential nomination (including delegate-count clinch phrasings), becoming the presumptive Democratic nominee, or Democrats nominating him for president. Presidential, year-2028, or presumptive-nominee context is required, so state-level primary wins and general-election victory subjects do not match this market. Resolves NO if no 2 matching alerts arrive by November 7, 2028.",
+  "sources": [
+   "Associated Press",
+   "The New York Times",
+   "The Washington Post",
+   "CNN",
+   "Reuters"
+  ],
+  "threshold": 2,
+  "contentRegex": "(?i)((tim|timothy) walz( officially| formally)? (clinches|wins|secures|accepts) (the )?(2028 )?democratic( party's)?( presidential)? nomination|(tim|timothy) walz (is|becomes) the (presumptive )?democratic (presidential )?nominee|democrats (formally )?nominate (tim|timothy) walz for president)",
+  "contentField": "subject",
+  "deadlineIso": "2028-11-07T00:00:00Z",
+  "windowStartZero": false
+ },
+ {
+  "pmQuestion": "Will George Clooney win the 2028 Democratic presidential nomination?",
+  "volumeNum": 42960328,
+  "category": "Politics",
+  "ourQuestion": "Will George Clooney win the 2028 Democratic presidential nomination? (resolves by Nov 7, 2028)",
+  "description": "Resolves YES if at least 2 of Associated Press, The New York Times, The Washington Post, CNN, and Reuters send alert emails whose subject reports George Clooney winning/clinching the Democratic presidential nomination (including delegate-count clinch phrasings), becoming the presumptive Democratic nominee, or Democrats nominating him for president. The pattern requires a nomination verb directly after his name plus presidential, year-2028, or presumptive-nominee context, so endorsement, op-ed, and film-related subjects cannot match. Resolves NO if no 2 matching alerts arrive by November 7, 2028.",
+  "sources": [
+   "Associated Press",
+   "The New York Times",
+   "The Washington Post",
+   "CNN",
+   "Reuters"
+  ],
+  "threshold": 2,
+  "contentRegex": "(?i)(george clooney( officially| formally)? (clinches|wins|secures|accepts) (the )?(2028 )?democratic( party's)?( presidential)? nomination|george clooney (is|becomes) the (presumptive )?democratic (presidential )?nominee|democrats (formally )?nominate george clooney for president)",
+  "contentField": "subject",
+  "deadlineIso": "2028-11-07T00:00:00Z",
+  "windowStartZero": false
+ },
+ {
+  "pmQuestion": "Will Kim Kardashian win the 2028 Democratic presidential nomination?",
+  "volumeNum": 42797308,
+  "category": "Politics",
+  "ourQuestion": "Will Kim Kardashian win the 2028 Democratic presidential nomination? (resolves by Nov 7, 2028)",
+  "description": "Resolves YES if at least 2 of Associated Press, The New York Times, The Washington Post, CNN, and Reuters send alert emails whose subject reports Kim Kardashian winning/clinching the Democratic presidential nomination, becoming the (presumptive) Democratic presidential nominee, Democrats nominating her for president, or her accepting the Democratic nomination for president. The pattern requires a nomination verb directly after her name plus explicit presidential context (presidential nomination, nomination for president, presidential nominee, or nominee for president), so speculation about a bid, primary-state wins, state-race nominations, and unrelated Kardashian news cannot match. Resolves NO if no 2 matching alerts arrive by November 7, 2028.",
+  "sources": [
+   "Associated Press",
+   "The New York Times",
+   "The Washington Post",
+   "CNN",
+   "Reuters"
+  ],
+  "threshold": 2,
+  "contentRegex": "(?i)((kim )?kardashian (wins|clinches|captures|secures|claims) (the )?(2028 )?(democratic|dnc)( party.s)? (presidential nomination|nomination for president)|(kim )?kardashian (is|becomes)( officially| formally)?( the)?( 2028)? (presumptive )?(democratic|dnc)(.s| party.s)? (presumptive )?(presidential nominee|nominee for president)|democrats (formally )?nominate (kim )?kardashian (for president|as (their |the )?presidential nominee)|(kim )?kardashian accepts (the )?(2028 )?(democratic|dnc)( party.s)? (presidential nomination|nomination for president))",
+  "contentField": "subject",
+  "deadlineIso": "2028-11-07T00:00:00Z",
+  "windowStartZero": false
+ },
+ {
+  "pmQuestion": "Will Beto O’Rourke win the 2028 Democratic presidential nomination?",
+  "volumeNum": 42718638,
+  "category": "Politics",
+  "ourQuestion": "Will Beto O'Rourke win the 2028 Democratic presidential nomination? (resolves by Nov 8, 2028)",
+  "description": "Resolves YES if 2 of 5 sources (Associated Press, The New York Times, The Washington Post, CNN, Reuters) send alert emails whose subject reports O'Rourke winning/clinching the Democratic presidential nomination, becoming the (presumptive) Democratic presidential nominee, Democrats nominating O'Rourke for president, or O'Rourke accepting the Democratic nomination for president. The nomination phrase must directly follow the win verb and must include presidential context (presidential nomination, nomination for president, presidential nominee, or nominee for president), so primary-state wins, endorsements, campaign coverage, and any O'Rourke Texas Senate or governor nomination cannot trigger it. Resolves NO if no such match by November 8, 2028.",
+  "sources": [
+   "Associated Press",
+   "The New York Times",
+   "The Washington Post",
+   "CNN",
+   "Reuters"
+  ],
+  "threshold": 2,
+  "contentRegex": "(?i)(((beto|robert) )?o.?rourke (wins|clinches|captures|secures|claims) (the )?(2028 )?(democratic|dnc)( party.s)? (presidential nomination|nomination for president)|((beto|robert) )?o.?rourke (is|becomes)( officially| formally)?( the)?( 2028)? (presumptive )?(democratic|dnc)(.s| party.s)? (presumptive )?(presidential nominee|nominee for president)|democrats (formally )?nominate ((beto|robert) )?o.?rourke (for president|as (their |the )?presidential nominee)|((beto|robert) )?o.?rourke accepts (the )?(2028 )?(democratic|dnc)( party.s)? (presidential nomination|nomination for president))",
+  "contentField": "subject",
+  "deadlineIso": "2028-11-08T00:00:00Z",
+  "windowStartZero": false
+ },
+ {
+  "pmQuestion": "Will Phil Murphy win the 2028 Democratic presidential nomination?",
+  "volumeNum": 42245142,
+  "category": "Politics",
+  "ourQuestion": "Will Phil Murphy win the 2028 Democratic presidential nomination? (resolves by Nov 8, 2028)",
+  "description": "Resolves YES if 2 of 5 sources (Associated Press, The New York Times, The Washington Post, CNN, Reuters) send alert emails whose subject matches: 'Phil Murphy' clinching/winning/securing/accepting the Democratic presidential nomination or the Democratic nomination for president, Murphy becoming the Democratic presidential nominee, or a subject-initial 'Democrats (formally) nominate Phil Murphy for president'. The full first name is required so Sen. Chris Murphy headlines cannot match, third-person verb forms (clinches/wins/secures) exclude 'Can Murphy win...' speculation, and 'presidential'/'for president' wording excludes state-level races. Resolves NO if no such match by November 8, 2028 (just after the Polymarket end date of Nov 7, 2028).",
+  "sources": [
+   "Associated Press",
+   "The New York Times",
+   "The Washington Post",
+   "CNN",
+   "Reuters"
+  ],
+  "threshold": 2,
+  "contentRegex": "(?i)(phil(lip|ip)? murphy).{0,15}(clinches|has clinched|wins|has won|secures|has secured|captures|accepts|formally accepts|seals|locks up).{0,30}((the |his |her |their )?(2028 )?(democratic |democrats.? |party.s )?presidential nomination|(the |his |her |their )?(2028 )?democratic nomination for president|(the )?nomination for president)|(phil(lip|ip)? murphy).{0,15}(is|becomes|named)( officially| formally| now)? (the |their )?(2028 )?democratic (party.s )?(presidential nominee|nominee for president)|^((breaking news|breaking|news alert|news|alert|urgent)[:\\-] ?)?(democrats|(the )?democratic party) (formally |officially )?(nominates?|chooses?|picks?|selects?) (gov\\.? |governor )?(phil(lip|ip)? murphy).{0,25}(for president|as (their |the |its )?(presidential nominee|nominee for president))",
+  "contentField": "subject",
+  "deadlineIso": "2028-11-08T00:00:00Z",
+  "windowStartZero": false
+ },
+ {
+  "pmQuestion": "Will MrBeast win the 2028 Democratic presidential nomination?",
+  "volumeNum": 40928657,
+  "category": "Politics",
+  "ourQuestion": "Will MrBeast win the 2028 Democratic presidential nomination? (resolves by Nov 8, 2028)",
+  "description": "Resolves YES if 2 of 5 sources (Associated Press, The New York Times, The Washington Post, CNN, Reuters) send alert emails whose subject matches: MrBeast (or Jimmy Donaldson) clinching/winning/securing/accepting the Democratic presidential nomination or nomination for president, becoming the Democratic presidential nominee, or a subject-initial 'Democrats nominate MrBeast for president'. Third-person win-verbs are required so campaign-announcement and speculation subjects ('MrBeast announces run...', 'Will Democrats nominate MrBeast?') do not match, and award headlines fail the presidential-nomination wording requirement. Resolves NO if no such match by November 8, 2028 (just after the Polymarket end date of Nov 7, 2028).",
+  "sources": [
+   "Associated Press",
+   "The New York Times",
+   "The Washington Post",
+   "CNN",
+   "Reuters"
+  ],
+  "threshold": 2,
+  "contentRegex": "(?i)(mr\\.? ?beast|jimmy donaldson).{0,15}(clinches|has clinched|wins|has won|secures|has secured|captures|accepts|formally accepts|seals|locks up).{0,30}((the |his |her |their )?(2028 )?(democratic |democrats.? |party.s )?presidential nomination|(the |his |her |their )?(2028 )?democratic nomination for president|(the )?nomination for president)|(mr\\.? ?beast|jimmy donaldson).{0,15}(is|becomes|named)( officially| formally| now)? (the |their )?(2028 )?democratic (party.s )?(presidential nominee|nominee for president)|^((breaking news|breaking|news alert|news|alert|urgent)[:\\-] ?)?(democrats|(the )?democratic party) (formally |officially )?(nominates?|chooses?|picks?|selects?) (mr\\.? ?beast|(jimmy )?donaldson).{0,25}(for president|as (their |the |its )?(presidential nominee|nominee for president))",
+  "contentField": "subject",
+  "deadlineIso": "2028-11-08T00:00:00Z",
+  "windowStartZero": false
+ },
+ {
+  "pmQuestion": "Will Kim Kardashian win the 2028 US Presidential Election?",
+  "volumeNum": 40145627,
+  "category": "Politics",
+  "ourQuestion": "Will Kim Kardashian win the 2028 US presidential election? (resolves by Nov 14, 2028)",
+  "description": "Resolves YES if 2 of 5 sources (Associated Press, The New York Times, The Washington Post, CNN, Reuters) send alert emails whose subject matches: Kardashian wins/clinches/captures the presidency, presidential election/race, or White House; 'Kardashian (is) elected president'; 'Kardashian defeats X to win the presidency/White House'; or 'president-elect Kim Kardashian'. Conjugated win-verbs and an explicit verb set before 'elected' keep question subjects ('Will Kim Kardashian be elected president?') and primary, nomination, or debate headlines from matching. The deadline runs one week past election day (Polymarket end date Nov 7, 2028) to allow for a slow race call; resolves NO if no such match by November 14, 2028.",
+  "sources": [
+   "Associated Press",
+   "The New York Times",
+   "The Washington Post",
+   "CNN",
+   "Reuters"
+  ],
+  "threshold": 2,
+  "contentRegex": "(?i)((kim )?kardashian).{0,12}(wins|has won|clinches|captures) (the )?(2028 )?(u\\.?s\\.? )?(presidency|presidential (election|race)|white house|race for the white house)|((kim )?kardashian)( is| has been| is officially| officially| formally)? elected (the )?(4[5-9]th |next )?(u\\.?s\\.? )?president|((kim )?kardashian) (defeats|beats) .{1,35}to (win|capture|claim) the (presidency|white house)|president.elect (kim )?kardashian",
+  "contentField": "subject",
+  "deadlineIso": "2028-11-14T00:00:00Z",
+  "windowStartZero": false
+ },
+ {
+  "pmQuestion": "Will China invade Taiwan by end of 2026?",
+  "volumeNum": 39887699,
+  "category": "World",
+  "ourQuestion": "Will China invade Taiwan by Dec 31, 2026?",
+  "description": "Resolves YES if 2 of 8 sources (Reuters, Associated Press, The New York Times, The Washington Post, CNN, The Guardian, The Wall Street Journal, Bloomberg) send alert emails whose subject starts (after an optional 'Breaking News:'-style prefix) with a declarative invasion clause: 'China/Beijing launches/begins a (full-scale) invasion or amphibious assault/landing of/on Taiwan', 'China invades Taiwan', 'Chinese/PLA forces/troops invade or land on Taiwan', or 'China's invasion of Taiwan begins/is underway'. The start-of-subject anchor and third-person declarative verbs exclude 'Will China invade Taiwan?' speculation, and drills, blockades, 'military operation', missile-strike, and Taiwan-held-outlying-island subjects deliberately do not match, so only an invasion of Taiwan itself resolves YES. Resolves NO if no such match by January 2, 2027 (Polymarket end date Dec 31, 2026).",
+  "sources": [
+   "Reuters",
+   "Associated Press",
+   "The New York Times",
+   "The Washington Post",
+   "CNN",
+   "The Guardian",
+   "The Wall Street Journal",
+   "Bloomberg"
+  ],
+  "threshold": 2,
+  "contentRegex": "(?i)^((breaking news|breaking|news alert|news|alert|urgent|ap news alert|reuters news alert|cnn breaking news)[:\\-] ?)?((china|beijing) (has )?(launche[sd]|begins|began|starts|started|commences|commenced|mounts) (a |an |its )?(full.scale |massive |all.out |military |long.feared |surprise )?(invasion|amphibious (assault|landing)) (of|on|against) taiwan( |[.,:;!?]|$)|(china|beijing) (invades|has invaded) taiwan( |[.,:;!?]|$)|(chinese|pla) (forces|troops|military) (have |has )?(invade[sd]?|land(ed)?) (on |in )?taiwan( |[.,:;!?]|$)|(china|beijing).?s invasion of taiwan (begins|has begun|is under ?way|underway))",
+  "contentField": "subject",
+  "deadlineIso": "2027-01-02T00:00:00Z",
+  "windowStartZero": false
+ },
+ {
+  "pmQuestion": "Will Zohran Mamdani win the 2028 Democratic presidential nomination?",
+  "volumeNum": 38641774,
+  "category": "Politics",
+  "ourQuestion": "Will Zohran Mamdani win the 2028 Democratic presidential nomination? (resolves by Nov 8, 2028)",
+  "description": "Resolves YES if 2 of 5 sources (Associated Press, The New York Times, The Washington Post, CNN, Reuters) send alert emails whose subject matches: Mamdani clinching/winning/securing/accepting the Democratic presidential nomination or nomination for president, becoming the Democratic presidential nominee, or a subject-initial 'Democrats nominate Zohran Mamdani for president'. The pattern requires 'presidential nomination', 'presidential nominee', or 'for president', so New York governor-primary or mayoral-nomination headlines cannot trigger it, and third-person win-verbs exclude campaign launches and speculation. Resolves NO if no such match by November 8, 2028 (just after the Polymarket end date of Nov 7, 2028).",
+  "sources": [
+   "Associated Press",
+   "The New York Times",
+   "The Washington Post",
+   "CNN",
+   "Reuters"
+  ],
+  "threshold": 2,
+  "contentRegex": "(?i)((zohran )?mamdani).{0,15}(clinches|has clinched|wins|has won|secures|has secured|captures|accepts|formally accepts|seals|locks up).{0,30}((the |his |her |their )?(2028 )?(democratic |democrats.? |party.s )?presidential nomination|(the |his |her |their )?(2028 )?democratic nomination for president|(the )?nomination for president)|((zohran )?mamdani).{0,15}(is|becomes|named)( officially| formally| now)? (the |their )?(2028 )?democratic (party.s )?(presidential nominee|nominee for president)|^((breaking news|breaking|news alert|news|alert|urgent)[:\\-] ?)?(democrats|(the )?democratic party) (formally |officially )?(nominates?|chooses?|picks?|selects?) ((zohran )?mamdani).{0,25}(for president|as (their |the |its )?(presidential nominee|nominee for president))",
+  "contentField": "subject",
+  "deadlineIso": "2028-11-08T00:00:00Z",
+  "windowStartZero": false
+ },
+ {
+  "pmQuestion": "Will Liz Cheney win the 2028 Democratic presidential nomination?",
+  "volumeNum": 38399355,
+  "category": "Politics",
+  "ourQuestion": "Will Liz Cheney win the 2028 Democratic presidential nomination? (resolves by Nov 8, 2028)",
+  "description": "Resolves YES if 2 of 5 sources (Associated Press, The New York Times, The Washington Post, CNN, Reuters) send alert emails whose subject matches: 'Liz Cheney' (or Elizabeth Cheney) clinching/winning/securing/accepting the Democratic presidential nomination or nomination for president, becoming the Democratic presidential nominee, or a subject-initial 'Democrats nominate Liz Cheney for president'. The full name is required, and third-person win-verbs plus 'presidential'/'for president' wording exclude speculation, endorsements, and other races. Resolves NO if no such match by November 8, 2028 (just after the Polymarket end date of Nov 7, 2028).",
+  "sources": [
+   "Associated Press",
+   "The New York Times",
+   "The Washington Post",
+   "CNN",
+   "Reuters"
+  ],
+  "threshold": 2,
+  "contentRegex": "(?i)((liz|elizabeth) cheney).{0,15}(clinches|has clinched|wins|has won|secures|has secured|captures|accepts|formally accepts|seals|locks up).{0,30}((the |his |her |their )?(2028 )?(democratic |democrats.? |party.s )?presidential nomination|(the |his |her |their )?(2028 )?democratic nomination for president|(the )?nomination for president)|((liz|elizabeth) cheney).{0,15}(is|becomes|named)( officially| formally| now)? (the |their )?(2028 )?democratic (party.s )?(presidential nominee|nominee for president)|^((breaking news|breaking|news alert|news|alert|urgent)[:\\-] ?)?(democrats|(the )?democratic party) (formally |officially )?(nominates?|chooses?|picks?|selects?) ((liz|elizabeth) )?cheney.{0,25}(for president|as (their |the |its )?(presidential nominee|nominee for president))",
+  "contentField": "subject",
+  "deadlineIso": "2028-11-08T00:00:00Z",
+  "windowStartZero": false
+ },
+ {
+  "pmQuestion": "Will Vivek Ramaswamy win the 2028 US Presidential Election?",
+  "volumeNum": 37727327,
+  "category": "Politics",
+  "ourQuestion": "Will Vivek Ramaswamy win the 2028 US presidential election? (resolves by Nov 14, 2028)",
+  "description": "Resolves YES if 2 of 5 sources (Associated Press, The New York Times, The Washington Post, CNN, Reuters) send alert emails whose subject matches: Ramaswamy wins/clinches/captures the presidency, presidential election/race, or White House; 'Ramaswamy (is) elected president'; 'Ramaswamy defeats X to win the presidency/White House'; or 'president-elect Vivek Ramaswamy'. Governor-race, primary, nomination, and question subjects deliberately do not match. The deadline runs one week past election day (Polymarket end date Nov 7, 2028) to allow for a slow race call; resolves NO if no such match by November 14, 2028.",
+  "sources": [
+   "Associated Press",
+   "The New York Times",
+   "The Washington Post",
+   "CNN",
+   "Reuters"
+  ],
+  "threshold": 2,
+  "contentRegex": "(?i)((vivek )?ramaswamy).{0,12}(wins|has won|clinches|captures) (the )?(2028 )?(u\\.?s\\.? )?(presidency|presidential (election|race)|white house|race for the white house)|((vivek )?ramaswamy)( is| has been| is officially| officially| formally)? elected (the )?(4[5-9]th |next )?(u\\.?s\\.? )?president|((vivek )?ramaswamy) (defeats|beats) .{1,35}to (win|capture|claim) the (presidency|white house)|president.elect (vivek )?ramaswamy",
+  "contentField": "subject",
+  "deadlineIso": "2028-11-14T00:00:00Z",
+  "windowStartZero": false
+ },
+ {
+  "pmQuestion": "Will Jasmine Crockett win the 2028 Democratic presidential nomination?",
+  "volumeNum": 36397726,
+  "category": "Politics",
+  "ourQuestion": "Will Jasmine Crockett win the 2028 Democratic presidential nomination? (by Nov 6, 2028)",
+  "description": "Resolves YES if at least 2 of The New York Times, The Washington Post, Associated Press, Reuters, and CNN send a DKIM-signed alert email whose subject reports that Jasmine Crockett has won, clinched, secured, accepted, or captured the Democratic presidential nomination, or that Democrats have formally nominated her for president. Subjects are verified onchain against the market pattern. Headlines about campaign launches, polls, endorsements, or speculation about the nomination do not match. Resolves NO if no qualifying alerts arrive by November 6, 2028, 11:59 PM ET.",
+  "sources": [
+   "The New York Times",
+   "The Washington Post",
+   "Associated Press",
+   "Reuters",
+   "CNN"
+  ],
+  "threshold": 2,
+  "contentRegex": "(?i)(crockett (wins|clinches|secures|accepts|captures) (the )?(2028 )?democratic( party.s)?( presidential)? nomination|crockett (is|becomes) the (2028 )?democratic (presidential )?nominee|democrats (formally |officially )?nominates? .{0,40}crockett)",
+  "contentField": "subject",
+  "deadlineIso": "2028-11-07T04:59:59Z",
+  "windowStartZero": true
+ },
+ {
+  "pmQuestion": "Will John Thune win the 2028 Republican presidential nomination?",
+  "volumeNum": 36175524,
+  "category": "Politics",
+  "ourQuestion": "Will John Thune win the 2028 Republican presidential nomination? (by Nov 6, 2028)",
+  "description": "Resolves YES if at least 2 of The New York Times, The Washington Post, Associated Press, Reuters, and CNN send a DKIM-signed alert email whose subject reports that John Thune has won, clinched, secured, accepted, or captured the Republican (or GOP) presidential nomination, or that Republicans have formally nominated him for president. Subjects are verified onchain against the market pattern. Headlines about a possible run, primaries, polls, or the nomination race do not match. Resolves NO if no qualifying alerts arrive by November 6, 2028, 11:59 PM ET.",
+  "sources": [
+   "The New York Times",
+   "The Washington Post",
+   "Associated Press",
+   "Reuters",
+   "CNN"
+  ],
+  "threshold": 2,
+  "contentRegex": "(?i)(thune (wins|clinches|secures|accepts|captures) (the )?(2028 )?(republican|gop)( party.s)?( presidential)? nomination|thune (is|becomes) the (2028 )?(republican|gop) (presidential )?nominee|(republicans|gop) (formally |officially )?nominates? .{0,40}thune)",
+  "contentField": "subject",
+  "deadlineIso": "2028-11-07T04:59:59Z",
+  "windowStartZero": true
+ },
+ {
+  "pmQuestion": "Will Kristi Noem win the 2028 Republican presidential nomination?",
+  "volumeNum": 36104796,
+  "category": "Politics",
+  "ourQuestion": "Will Kristi Noem win the 2028 Republican presidential nomination? (by Nov 6, 2028)",
+  "description": "Resolves YES if at least 2 of Associated Press, Reuters, The New York Times, The Washington Post, and CNN send an alert email whose subject reports that Kristi Noem has won, clinched, secured, captured, or accepted the Republican (GOP/G.O.P.) presidential nomination, or become the Republican nominee. Subjects are verified onchain against the market pattern. Subjects that merely announce her candidacy, speculate about her chances, or report that she failed to clinch or dropped out do not match. Resolves NO if no qualifying alerts arrive by November 6, 2028, 11:59 PM ET.",
+  "sources": [
+   "Associated Press",
+   "Reuters",
+   "The New York Times",
+   "The Washington Post",
+   "CNN"
+  ],
+  "threshold": 2,
+  "contentRegex": "(?i)noem.{0,15}(wins|won\\s|clinches|clinched|secures|secured|captures|captured|accepts|accepted|becomes|became).{0,40}(republican|g\\.?o\\.?p\\.?).{0,30}(nominat|nominee)",
+  "contentField": "subject",
+  "deadlineIso": "2028-11-07T04:59:59Z",
+  "windowStartZero": false
+ },
+ {
+  "pmQuestion": "Will Gina Raimondo win the 2028 Democratic presidential nomination?",
+  "volumeNum": 35687472,
+  "category": "Politics",
+  "ourQuestion": "Will Gina Raimondo clinch the 2028 Democratic presidential nomination by Sep 30, 2028?",
+  "description": "Resolves YES if at least 2 of Associated Press, Reuters, The New York Times, The Washington Post, and CNN send an alert email whose subject reports that Gina Raimondo has won, clinched, secured, captured, or accepted the Democratic presidential nomination, or become the Democratic nominee, before Sep 30, 2028 23:59 UTC. Subjects that merely announce a campaign, handicap her chances, or report a failed or abandoned bid do not match. Resolves NO at the deadline otherwise.",
+  "sources": [
+   "Associated Press",
+   "Reuters",
+   "The New York Times",
+   "The Washington Post",
+   "CNN"
+  ],
+  "threshold": 2,
+  "contentRegex": "(?i)raimondo.{0,15}(wins|won\\s|clinches|clinched|secures|secured|captures|captured|accepts|accepted|becomes|became).{0,40}democrat.{0,35}(nominat|nominee)",
+  "contentField": "subject",
+  "deadlineIso": "2028-09-30T23:59:59Z",
+  "windowStartZero": false
+ },
+ {
+  "pmQuestion": "Will Greg Abbott win the 2028 US Presidential Election?",
+  "volumeNum": 35272839,
+  "category": "Politics",
+  "ourQuestion": "Will Greg Abbott win the 2028 US presidential election? (alerts by Dec 15, 2028)",
+  "description": "Resolves YES if by Dec 15, 2028 at least 2 of Associated Press, The New York Times, The Washington Post, CNN, and Reuters send a breaking-news alert email whose subject declares Greg Abbott elected president or winner of the 2028 US presidency/White House/presidential election. The pattern requires a declarative call adjacent to Abbott's name ('Abbott is elected president', 'Abbott wins the presidency', 'President-elect Abbott') and does not match primary or nomination wins, speculative or hypothetical phrasings, or subjects where another candidate defeats Abbott. Resolves NO if no such threshold of alerts arrives by the deadline.",
+  "sources": [
+   "Associated Press",
+   "The New York Times",
+   "The Washington Post",
+   "CNN",
+   "Reuters"
+  ],
+  "threshold": 2,
+  "contentRegex": "(?i)(abbott (is |has been )?elected( the)?( \\d\\d(st|nd|rd|th))? president|abbott (wins|has won|clinches|captures) (the )?(2028 )?(u\\.?s\\.? )?(presidency|white house|presidential (election|race))|president.elect (greg )?abbott)",
+  "contentField": "subject",
+  "deadlineIso": "2028-12-15T23:59:59Z",
+  "windowStartZero": true
+ },
+ {
+  "pmQuestion": "Will Tulsi Gabbard win the 2028 US Presidential Election?",
+  "volumeNum": 34512175,
+  "category": "Politics",
+  "ourQuestion": "Will Tulsi Gabbard win the 2028 US presidential election? (alerts by Dec 15, 2028)",
+  "description": "Resolves YES if by Dec 15, 2028 at least 2 of Associated Press, The New York Times, The Washington Post, CNN, and Reuters send a breaking-news alert email whose subject declares Tulsi Gabbard elected president or winner of the 2028 US presidency/White House/presidential election. The pattern requires a declarative call adjacent to Gabbard's name ('Gabbard is elected president', 'Gabbard wins the White House', 'President-elect Gabbard') and does not match primary/nomination results, speculative headlines, or subjects where another candidate defeats Gabbard. Resolves NO if no such threshold of alerts arrives by the deadline.",
+  "sources": [
+   "Associated Press",
+   "The New York Times",
+   "The Washington Post",
+   "CNN",
+   "Reuters"
+  ],
+  "threshold": 2,
+  "contentRegex": "(?i)(gabbard (is |has been )?elected( the)?( \\d\\d(st|nd|rd|th))? president|gabbard (wins|has won|clinches|captures) (the )?(2028 )?(u\\.?s\\.? )?(presidency|white house|presidential (election|race))|president.elect (tulsi )?gabbard)",
+  "contentField": "subject",
+  "deadlineIso": "2028-12-15T23:59:59Z",
+  "windowStartZero": true
+ },
+ {
+  "pmQuestion": "Will Barack Obama win the 2028 Democratic presidential nomination?",
+  "volumeNum": 33905047,
+  "category": "Politics",
+  "ourQuestion": "Will Barack Obama win the 2028 Democratic presidential nomination? (alerts by Nov 6, 2028)",
+  "description": "Resolves YES if by Nov 6, 2028 at least 2 of Associated Press, The New York Times, The Washington Post, and CNN send an alert email whose subject declares Barack Obama (or 'Former President Obama') clinching, winning, securing, or accepting the 2028 Democratic presidential nomination, or Democrats nominating him. The pattern requires the unambiguous name next to a declarative verb, so alerts about Michelle Obama, speculative candidacy chatter, or Obama declining the nomination do not match. Resolves NO if no such threshold of alerts arrives by the deadline.",
+  "sources": [
+   "Associated Press",
+   "The New York Times",
+   "The Washington Post",
+   "CNN"
+  ],
+  "threshold": 2,
+  "contentRegex": "(?i)((barack|former president) obama( formally| officially)? (clinches|wins|secures|captures|accepts) (the )?(2028 )?democratic( party.?s)? (presidential )?nomination|(democrats|democratic party) (formally |officially )?nominates? (barack|former president) obama|(barack|former president) obama (is )?(named|becomes|chosen as)( the)? democratic (presidential )?nominee)",
+  "contentField": "subject",
+  "deadlineIso": "2028-11-06T23:59:59Z",
+  "windowStartZero": true
+ },
+ {
+  "pmQuestion": "Will Stephen Smith win the 2028 US Presidential Election?",
+  "volumeNum": 33395806,
+  "category": "Politics",
+  "ourQuestion": "Will Stephen A. Smith be declared winner of the 2028 US presidential election by Nov 14, 2028?",
+  "description": "Resolves YES if at least 2 of Associated Press, The New York Times, The Washington Post, CNN, and Reuters send breaking-news alert emails whose subject declares Stephen A. Smith elected: 'wins the presidency/presidential election/White House', '(is) elected president', 'defeats X to win the presidency/White House', or 'President-elect Stephen A. Smith'. The pattern requires presidency- or election-specific wording, so 'wins the Democratic presidential primary', debate headlines, and opinion subjects cannot match, and win-verbs must follow Smith's name so loser-side subjects like 'X defeats Stephen A. Smith to win the presidency' fail. Resolves NO at the deadline of November 14, 2028, one week past election day (Polymarket end date Nov 7, 2028).",
+  "sources": [
+   "Associated Press",
+   "The New York Times",
+   "The Washington Post",
+   "CNN",
+   "Reuters"
+  ],
+  "threshold": 2,
+  "contentRegex": "(?i)(stephen (a\\.? )?smith).{0,12}(wins|has won|clinches|captures) (the )?(2028 )?(u\\.?s\\.? )?(presidency|presidential (election|race)|white house|race for the white house)|(stephen (a\\.? )?smith)( is| has been| is officially| officially| formally)? elected (the )?(4[5-9]th |next )?(u\\.?s\\.? )?president|(stephen (a\\.? )?smith) (defeats|beats) .{1,35}to (win|capture|claim) the (presidency|white house)|president.elect stephen (a\\.? )?smith",
+  "contentField": "subject",
+  "deadlineIso": "2028-11-14T00:00:00Z",
+  "windowStartZero": false
+ },
+ {
+  "pmQuestion": "Will Tom Brady win the 2028 Republican presidential nomination?",
+  "volumeNum": 32897445,
+  "category": "Politics",
+  "ourQuestion": "Will Tom Brady clinch the 2028 Republican presidential nomination by Nov 7, 2028?",
+  "description": "Resolves YES if at least 2 of Associated Press, The New York Times, The Washington Post, CNN, and Reuters send alert emails whose subject says Brady clinches/wins/secures/accepts the Republican (GOP) nomination, becomes the Republican (presumptive) nominee, or that Republicans (or the Republican Party/GOP) nominate Tom Brady, by the end of November 7, 2028 (UTC). Gap words between the victory verb and 'nomination' are restricted to a qualifier whitelist that must include a GOP/Republican party word, so primary-win, speculation, wrong-party, and non-political nomination subjects do not match. Resolves NO at the deadline otherwise.",
+  "sources": [
+   "Associated Press",
+   "The New York Times",
+   "The Washington Post",
+   "CNN",
+   "Reuters"
+  ],
+  "threshold": 2,
+  "contentRegex": "(?i).*((tom )?brady( officially| formally)? (clinches|secures|wins|has won|captures|accepts|locks up)( enough delegates to (clinch|secure|win))?( the| his| 2028)?( 2028)? (gop|republican)( party'?s)?( presidential)? nominat|(tom )?brady( officially| formally)? (will be|becomes|is now|is set to become|is) the( 2028)?( presumptive)? (gop|republican)( party'?s?)?( presumptive)?( presidential)? nominee|(republicans|(the )?republican party|(the )?gop)( formally| officially)? nominates? (tom )?brady).*",
+  "contentField": "subject",
+  "deadlineIso": "2028-11-08T00:00:00Z",
+  "windowStartZero": false
+ },
+ {
+  "pmQuestion": "Will Richard Grenell be the leader of Venezuela end of 2026?",
+  "volumeNum": 32751408,
+  "category": "World",
+  "ourQuestion": "Will Richard Grenell become Venezuela's head of state (president/leader) by Dec 31, 2026?",
+  "description": "Resolves YES if at least 2 of Associated Press, The New York Times, The Washington Post, CNN, and Reuters send alert emails whose subject reports Grenell sworn in/installed/named/appointed as (interim/acting/transitional) president, leader, or head of state of Venezuela, becoming or being named Venezuela's president/leader, someone naming/installing Grenell in that office, or Grenell taking power/office/the presidency in Venezuela. The assumption-of-office verb is bound directly to Grenell's name and the Venezuelan leadership title, so envoy subjects ('Grenell named special envoy for Venezuela'), meetings ('Grenell meets Venezuela's President Maduro'), and speculative or modal subjects ('Grenell may be named...', 'Trump to name Grenell...') do not match. Resolves NO at the deadline otherwise. Note: this ports Polymarket's holds-office-on-Dec-31 wording to the alertable become-leader event.",
+  "sources": [
+   "Associated Press",
+   "The New York Times",
+   "The Washington Post",
+   "CNN",
+   "Reuters"
+  ],
+  "threshold": 2,
+  "contentRegex": "(?i)(grenell (is |was |has been )?(sworn in|installed|inaugurated|named|appointed|declared) (as )?(the )?(interim |acting |transitional |new )?(president|leader|head of state) of venezuela|grenell (becomes|takes over as) venezuela'?s? (interim |acting |transitional |new )?(president|leader)|(names|appoints|installs) grenell (as )?(the )?(interim |acting |transitional |new )?(president|leader|head of state) of venezuela)",
+  "contentField": "subject",
+  "deadlineIso": "2027-01-01T00:00:00Z",
+  "windowStartZero": false
+ },
+ {
+  "pmQuestion": "Will Sarah Huckabee Sanders win the 2028 Republican presidential nomination?",
+  "volumeNum": 32712044,
+  "category": "Politics",
+  "ourQuestion": "Will Sarah Huckabee Sanders clinch the 2028 Republican presidential nomination by Nov 7, 2028?",
+  "description": "Resolves YES if at least 2 of Associated Press, The New York Times, The Washington Post, CNN, and Reuters send alert emails whose subject says Huckabee Sanders clinches/wins/secures the Republican (GOP) presidential nomination, wins the nomination for president, becomes the presumptive or presidential GOP nominee, or that Republicans nominate her for president. The full 'Huckabee Sanders' surname is required so Bernie Sanders headlines cannot match, and every branch requires an explicit presidential marker (presidential/presumptive/2028 or 'for president') so her 2026 Arkansas governor-race nomination subjects and single-primary wins cannot match. Resolves NO at the deadline otherwise.",
+  "sources": [
+   "Associated Press",
+   "The New York Times",
+   "The Washington Post",
+   "CNN",
+   "Reuters"
+  ],
+  "threshold": 2,
+  "contentRegex": "(?i)(sarah huckabee sanders( officially| formally)? (clinches|wins|secures|accepts) (the )?(2028 )?(republican|gop)( party's)?( presidential)? nomination|sarah huckabee sanders (is|becomes) the (presumptive )?(republican|gop) (presidential )?nominee|republicans (formally )?nominate sarah huckabee sanders for president)",
+  "contentField": "subject",
+  "deadlineIso": "2028-11-07T00:00:00Z",
+  "windowStartZero": false
+ },
+ {
+  "pmQuestion": "Will Raphael Warnock win the 2028 Democratic presidential nomination?",
+  "volumeNum": 32094576,
+  "category": "Politics",
+  "ourQuestion": "Will Raphael Warnock clinch the 2028 Democratic presidential nomination by Nov 7, 2028?",
+  "description": "Resolves YES if at least 2 of Associated Press, The New York Times, The Washington Post, CNN, and Reuters send alert emails whose subject says Warnock clinches/wins/secures the Democratic presidential nomination, wins the nomination for president, becomes the presumptive or presidential Democratic nominee, or that Democrats nominate him for president. Every branch requires an explicit presidential marker (presidential/presumptive/2028 or 'for president') so subjects about his 2028 Georgia Senate reelection (e.g. 'wins Democratic nomination for Senate') and single-primary or speculation subjects cannot match. Resolves NO at the deadline otherwise.",
+  "sources": [
+   "Associated Press",
+   "The New York Times",
+   "The Washington Post",
+   "CNN",
+   "Reuters"
+  ],
+  "threshold": 2,
+  "contentRegex": "(?i)(raphael warnock( officially| formally)? (clinches|wins|secures|accepts) (the )?(2028 )?democratic( party's)?( presidential)? nomination|raphael warnock (is|becomes) the (presumptive )?democratic (presidential )?nominee|democrats (formally )?nominate raphael warnock for president)",
+  "contentField": "subject",
+  "deadlineIso": "2028-11-07T00:00:00Z",
+  "windowStartZero": false
+ },
+ {
+  "pmQuestion": "Will Roy Cooper win the 2028 Democratic presidential nomination?",
+  "volumeNum": 31411294,
+  "category": "Politics",
+  "ourQuestion": "Will Roy Cooper clinch the 2028 Democratic presidential nomination by Nov 7, 2028?",
+  "description": "Resolves YES if at least 2 of Associated Press, The New York Times, The Washington Post, CNN, and Reuters send alert emails whose subject says Cooper clinches/wins/secures the Democratic presidential nomination, wins the nomination for president, becomes the presumptive or presidential Democratic nominee, or that Democrats nominate him for president. Every branch requires an explicit presidential marker (presidential/presumptive/2028 or 'for president') so subjects about his 2026 North Carolina Senate race (e.g. 'wins Democratic nomination for Senate') and Anderson Cooper coverage cannot match, and only emails dated after market creation count. Resolves NO at the deadline otherwise.",
+  "sources": [
+   "Associated Press",
+   "The New York Times",
+   "The Washington Post",
+   "CNN",
+   "Reuters"
+  ],
+  "threshold": 2,
+  "contentRegex": "(?i)(roy cooper( officially| formally)? (clinches|wins|secures|accepts) (the )?(2028 )?democratic( party's)?( presidential)? nomination|roy cooper (is|becomes) the (presumptive )?democratic (presidential )?nominee|democrats (formally )?nominate roy cooper for president)",
+  "contentField": "subject",
+  "deadlineIso": "2028-11-07T00:00:00Z",
+  "windowStartZero": false
+ },
+ {
+  "pmQuestion": "Will Elon Musk win the 2028 Republican presidential nomination?",
+  "volumeNum": 28906463,
+  "category": "Politics",
+  "ourQuestion": "Will Elon Musk clinch the 2028 Republican presidential nomination by Nov 7, 2028?",
+  "description": "Resolves YES if at least 2 of Associated Press, The New York Times, The Washington Post, CNN, and Reuters send alert emails whose subject says Musk clinches/wins/secures the Republican (GOP) presidential nomination, wins the nomination for president, becomes the presumptive or presidential GOP nominee, or that Republicans nominate Elon Musk for president. Every branch requires an explicit presidential marker (presidential/presumptive/2028 or 'for president') so straw polls, donations, cabinet or board nominations, and nomination-race commentary subjects cannot match. Resolves NO at the deadline otherwise.",
+  "sources": [
+   "Associated Press",
+   "The New York Times",
+   "The Washington Post",
+   "CNN",
+   "Reuters"
+  ],
+  "threshold": 2,
+  "contentRegex": "(?i)(elon musk( officially| formally)? (clinches|wins|secures|accepts) (the )?(2028 )?(republican|gop)( party's)?( presidential)? nomination|elon musk (is|becomes) the (presumptive )?(republican|gop) (presidential )?nominee|republicans (formally )?nominate elon musk for president)",
+  "contentField": "subject",
+  "deadlineIso": "2028-11-07T00:00:00Z",
+  "windowStartZero": false
+ },
+ {
+  "pmQuestion": "Will Katie Britt win the 2028 Republican presidential nomination?",
+  "volumeNum": 28832873,
+  "category": "Politics",
+  "ourQuestion": "Will Katie Britt clinch the 2028 Republican presidential nomination? (alerts by Nov 7, 2028)",
+  "description": "Resolves YES if, before November 7, 2028, at least 2 of Associated Press, The New York Times, The Washington Post, CNN, and Reuters send a DKIM-signed alert email whose subject reports Katie Britt winning, clinching, securing, or accepting the 2028 Republican presidential nomination, becoming the (presumptive) GOP presidential nominee, or Republicans nominating Britt for president. The pattern requires declarative nomination-result phrasing tied to the presidency, so campaign launches, speculative subjects, vice-presidential picks, and Britt's 2028 Alabama Senate race do not match. Resolves NO if fewer than 2 matching alerts arrive by the deadline.",
+  "sources": [
+   "Associated Press",
+   "The New York Times",
+   "The Washington Post",
+   "CNN",
+   "Reuters"
+  ],
+  "threshold": 2,
+  "contentRegex": "(?i)(britt\\s+(officially\\s+|formally\\s+)?(wins|clinches|secures|captures|claims|accepts|wraps\\s+up)\\s+(the\\s+)?(2028\\s+)?((republican|gop)(\\s+party.?s)?\\s+presidential\\s+nomination|((republican|gop)(.?s)?\\s+)?nomination\\s+for\\s+president)|britt\\s+(is\\s+named\\s+|is\\s+|becomes\\s+|named\\s+)(officially\\s+|formally\\s+|now\\s+)?(the\\s+)?(presumptive\\s+(republican|gop)\\s+(presidential\\s+)?nominee|(republican|gop)\\s+(presidential\\s+nominee|nominee\\s+for\\s+president))|(republicans|gop|republican\\s+party)\\s+(formally\\s+|officially\\s+)?nominates?\\s+(katie\\s+)?britt\\s+for\\s+president)",
+  "contentField": "subject",
+  "deadlineIso": "2028-11-07T00:00:00Z",
+  "windowStartZero": true
+ },
+ {
+  "pmQuestion": "Will Kim Kardashian win the 2028 Republican presidential nomination?",
+  "volumeNum": 28530824,
+  "category": "Politics",
+  "ourQuestion": "Will Kim Kardashian clinch the 2028 Republican presidential nomination? (alerts by Nov 7, 2028)",
+  "description": "Resolves YES if, before November 7, 2028, at least 2 of Associated Press, The New York Times, The Washington Post, CNN, and Reuters send a DKIM-signed alert email whose subject reports Kim Kardashian winning, clinching, securing, or accepting the 2028 Republican presidential nomination, or becoming the (presumptive) GOP presidential nominee. The nomination phrase must directly follow a conclusive verb, so speculative, campaign-tease, primary-state/horse-race, vice-presidential, and other-office nomination subjects do not match, nor do subjects where another candidate clinches with Kardashian merely mentioned. Resolves NO if fewer than 2 matching alerts arrive by the deadline.",
+  "sources": [
+   "Associated Press",
+   "The New York Times",
+   "The Washington Post",
+   "CNN",
+   "Reuters"
+  ],
+  "threshold": 2,
+  "contentRegex": "(?i)(kardashian\\s+((officially|formally|finally|has)\\s+)?(wins|won|clinches|clinched|secures|secured|captures|captured|accepts|wraps\\s+up)\\s+(the\\s+|her\\s+)?(2028\\s+)?(republican|gop|g\\.o\\.p\\.?)\\s+(party.s\\s+)?(presidential\\s+nomination|nomination\\s+for\\s+president)|kardashian\\s+(is|becomes|named)\\s+((now|officially|formally)\\s+)?the\\s+(presumptive\\s+)?(2028\\s+)?(republican|gop|g\\.o\\.p\\.?)\\s+(presidential\\s+nominee|nominee\\s+for\\s+president)|(republicans|republican\\s+party|gop|g\\.o\\.p\\.?)\\s+(formally\\s+)?nominates?\\s+([\\w.]+\\s+){0,3}kardashian\\s+for\\s+president)",
+  "contentField": "subject",
+  "deadlineIso": "2028-11-07T00:00:00Z",
+  "windowStartZero": true
+ },
+ {
+  "pmQuestion": "Will Elise Stefanik win the 2028 Republican presidential nomination?",
+  "volumeNum": 27973959,
+  "category": "Politics",
+  "ourQuestion": "Will Elise Stefanik clinch the 2028 Republican presidential nomination by Nov 7, 2028?",
+  "description": "Resolves YES if at least 2 of Associated Press, Reuters, The New York Times, The Washington Post, and CNN send a DKIM-verified alert email whose subject reports that Elise Stefanik has won, clinched, secured, or accepted the Republican presidential nomination or become the (presumptive) GOP presidential nominee, or that Republicans have nominated her for president. The pattern requires a conclusive verb immediately before an explicitly presidential nomination phrase, so speculative or negated subjects ('Could Stefanik win the GOP nomination?', 'Stefanik drops out'), another candidate clinching with Stefanik mentioned, and non-presidential nominations (e.g. the Republican nomination for New York governor or House speaker) do not match. Resolves NO if fewer than 2 matching alerts arrive by November 7, 2028.",
+  "sources": [
+   "Associated Press",
+   "Reuters",
+   "The New York Times",
+   "The Washington Post",
+   "CNN"
+  ],
+  "threshold": 2,
+  "contentRegex": "(?i)(stefanik\\s+((officially|formally|finally|has)\\s+)?(wins|won|clinches|clinched|secures|secured|captures|captured|accepts|wraps\\s+up)\\s+(the\\s+|her\\s+)?(2028\\s+)?(republican|gop|g\\.o\\.p\\.?)\\s+(party.s\\s+)?(presidential\\s+nomination|nomination\\s+for\\s+president)|stefanik\\s+(is|becomes|named)\\s+((now|officially|formally)\\s+)?the\\s+(presumptive\\s+)?(2028\\s+)?(republican|gop|g\\.o\\.p\\.?)\\s+(presidential\\s+nominee|nominee\\s+for\\s+president)|(republicans|republican\\s+party|gop|g\\.o\\.p\\.?)\\s+(formally\\s+)?nominates?\\s+([\\w.]+\\s+){0,3}stefanik\\s+for\\s+president)",
+  "contentField": "subject",
+  "deadlineIso": "2028-11-07T00:00:00Z",
+  "windowStartZero": true
+ }
+]

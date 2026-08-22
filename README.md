@@ -78,11 +78,37 @@ rejected as not email-settleable; the rest are live with `[category:x]` tags and
 initial liquidity** — fund one from its Liquidity panel (you set the opening odds) and
 trading opens. Creation configs: `app/scripts/create-markets.mjs`.
 
+### Settlement bot (daily cron)
+
+`app/scripts/settlement-bot.mjs` makes settlement automatic: it reads a mailbox over
+IMAP (or `.eml` files), parses each newspaper email's real DKIM signature, matches it
+against every unresolved market (domain, From-regex, content regex, time window — the
+same checks the contract makes), dry-runs `checkProof`, and submits `submitProof` for
+every accepted pair; it also calls `resolveNo` on markets past deadline + buffer. If a
+sender's key `(domain, selector)` isn't registered yet, it's looked up in the registry's
+events, then fetched from DNS and registered permissionlessly — so key rotation never
+blocks settlement. `.github/workflows/settle.yml` runs it **daily at 13:17 UTC** (and on
+demand, with a dry-run switch). To run the experiment, set three repo secrets yourself:
+`GMAIL_USER` (a mailbox subscribed to the papers' breaking-news alerts — a dedicated
+account is wise), `GMAIL_APP_PASSWORD` (Google Account → Security → 2-Step Verification
+→ App passwords; IMAP enabled), and `PRIVATE_KEY` (a funded settler key). Locally:
+
+```bash
+cd app && GMAIL_USER=… GMAIL_APP_PASSWORD=… node scripts/settlement-bot.mjs --network gnosis --since 2d   # dry run without PRIVATE_KEY
+node scripts/settlement-bot.mjs --network sepolia --eml ../emails/nyt-fed-cut.eml --eml ../emails/wapo-fed-cut.eml  # fixture settlement
+```
+
+> **Mainnet key hygiene:** the committed demo DKIM key was **revoked on Gnosis for all
+> eight newspaper domains on 2026-08-21** (registrant-only `revokeKey`), so the sample
+> fixtures can no longer settle mainnet markets. Only the real `nytimes.com` key is
+> registered there; other papers' real keys are registered by the bot from DNS when
+> their first genuine alert arrives. Fixtures still settle markets on local anvil and Sepolia.
+
 ## Also live on Sepolia testnet (chain 11155111)
 
 Same stack, free to try: faucet **TestUSDC** collateral, the demo DKIM key **and the real
-NYT key** registered, and two seeded markets (the Fed-cut market settles with the sample
-`.eml` fixtures). Switch networks from the header dropdown on the live app — the static
+NYT key** registered, two seeded markets (the Fed-cut market settles with the sample
+`.eml` fixtures) **plus the same 40 Polymarket-ported markets as mainnet**. Switch networks from the header dropdown on the live app — the static
 bundle embeds every deployment and picks via `localStorage`.
 
 All contracts verified on [eth-sepolia.blockscout.com](https://eth-sepolia.blockscout.com):
@@ -221,7 +247,7 @@ Follows the Polymarket/Gnosis standard:
 | Component | Here | Production delta |
 |---|---|---|
 | Email authenticity | **REAL** DKIM: RSA-SHA256 verified onchain (`RSAVerify` + modexp) against the domain's real public key in `DKIMRegistry`. The real NYT key + a real NYT email verify end to end. | Add key-rotation validity windows fed by a DNSSEC oracle (backlog A2); fold the DKIM RSA + SHA-256 into a zk circuit for private settlement (A1). |
-| Test fixtures | The sample `.eml`s are signed by a **real** committed dev RSA key (`keys/dev-dkim.pub`), registered in the registry — real signatures, real verification, dev key (we can't hold NYT's private key). | Real senders sign their own real emails. |
+| Test fixtures | The sample `.eml`s are signed by a **real** committed dev RSA key (`keys/dev-dkim.pub`) — real signatures, real verification, dev key (we can't hold NYT's private key). Registered on local/Sepolia only; **revoked on Gnosis mainnet**. | Real senders sign their own real emails; the settlement bot registers their DNS keys on first sight. |
 | Regex | **REAL** onchain matcher (`RegexLib`) over the DKIM-verified Subject. | Compile to a zk circuit for privacy (A3; `app/scripts/zkregex` already does regex→DFA→Groth16). |
 | Tokens / AMM / factory | **REAL** ConditionalTokens, FPMM, EIP-1167 clone factory. | Unchanged. |
 

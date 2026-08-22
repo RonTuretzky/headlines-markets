@@ -48,7 +48,7 @@ Legend: **P0** = needed for any real deployment · **P1** = trading-experience p
 | D4 **P1** | **Resolution timeline UI** | Polymarket-style labeled timeline ("Proof 1/2 accepted → threshold reached → finalized"), plus an "email inbox" view rendering each accepted alert. |
 | D5 **P2** | **Discovery** | ◑ *Categories shipped* (Polymarket-style category tags + filter tabs, stored as a description tag). Remaining: trending sort by 24h volume, comments, watchlists, embeds. |
 | D6 **P2** | **Notifications** | Push/email when a tracked market gets a proof, resolves, or nears deadline. |
-| D7 **P2** | **Settlement bot** | Reference daemon: IMAP-watch a mailbox subscribed to the alert lists (docs/NEWSPAPERS.md), auto-prove + auto-submit matching emails. Turns "permissionless" into "automatic". |
+| D7 **P2** | **Settlement bot** | ✅ *Shipped*: `app/scripts/settlement-bot.mjs` + daily `settle.yml` cron — IMAP (Gmail app password) or `.eml` input, onchain `checkProof` dry-run, `submitProof`/`resolveNo`, auto-registers unseen DKIM keys from DNS (also covers A2's rotation case for keys still in DNS). |
 
 ## E. Infrastructure
 
